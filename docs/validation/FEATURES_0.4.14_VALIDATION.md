@@ -15,7 +15,7 @@
 
 ## 출처
 
-[ADOFAI Tweaks의 곡 정보 숨김 대상](https://github.com/PizzaLovers007/AdofaiTweaks/blob/f1d0a1e2500004f8a92c73705af8b7dc6aca2839/AdofaiTweaks/Tweaks/HideUiElements/HideUiElementsSettings.cs)을 참고했습니다. MIT 원문을 소스와 배포물에 포함합니다.
+[ADOFAI Tweaks의 곡 정보 숨김 대상](https://github.com/PizzaLovers007/AdofaiTweaks/blob/f1d0a1e2500004f8a92c73705af8b7dc6aca2839/AdofaiTweaks/Tweaks/HideUiElements/HideUiElementsSettings.cs)을 참고했습니다. 소스 코드·DLL은 포함하지 않으며, 자체 구현과 선택적 설정 호환만 유지합니다. 따라서 배포에 불필요한 별도 MIT 전문은 제거했습니다.
 
 [얼불춤용 KeyboardChatterBlocker](https://github.com/fangshenghan/KeyboardChatterBlocker/tree/160270ee1b29fb40a36688eee77d3b6ef46a8812)에는 명시된 재배포 라이선스가 없어 코드·DLL을 복사하지 않고 같은 키 입력 간격 기능을 자체 구현했습니다. 키 제한이나 예외 키 설정은 추가하지 않았습니다. 검토용 원본 소스는 로컬에만 보관합니다.
 
