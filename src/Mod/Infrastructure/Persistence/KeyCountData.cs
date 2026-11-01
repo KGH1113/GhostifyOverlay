@@ -1,3 +1,5 @@
+// Derived from JipperResourcePack by Jongyeol. Copyright (c) 2024, Jongyeol.
+// BSD-3-Clause: see Licenses/JipperResourcePack-BSD-3-Clause.txt and THIRD-PARTY-NOTICES.md.
 using System;
 using System.IO;
 using Newtonsoft.Json;

@@ -11,7 +11,7 @@ $output=Join-Path $project 'dist'
 $work=Join-Path $PSScriptRoot 'obj'
 New-Item -ItemType Directory -Path $output,$work -Force | Out-Null
 $files=@(Get-ChildItem -LiteralPath $release -Recurse -File)
-if($files.Count -ne 14){throw 'Unexpected mod Release files'}
+if($files.Count -ne 15){throw 'Unexpected mod Release files'}
 $compatibility=Get-Content -LiteralPath (Join-Path $release 'GameCompatibility.json') -Raw -Encoding UTF8|ConvertFrom-Json
 if($compatibility.MinimumModManager -ne $info.ManagerVersion){throw 'Mod and installer UMM requirements differ'}
 $releaseInfo=Get-Content -LiteralPath (Join-Path $release 'Info.json') -Raw -Encoding UTF8|ConvertFrom-Json
@@ -87,5 +87,7 @@ $zip=Join-Path $output ('GhostifyOverlay-'+$info.Version+'.zip')
 Copy-Item -LiteralPath $payload -Destination $zip -Force
 $checksums=@($exe,$zip) | ForEach-Object {(Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant()+'  '+[IO.Path]::GetFileName($_)}
 [IO.File]::WriteAllLines((Join-Path $output 'SHA256SUMS.txt'),$checksums,[Text.UTF8Encoding]::new($false))
+& (Join-Path $PSScriptRoot 'Verify-DistributionNotices.ps1') -Package $exe -Root $project
+& (Join-Path $PSScriptRoot 'Verify-DistributionNotices.ps1') -Package $zip -Root $project
 'Installer: '+$exe
 'SHA256: '+(Get-FileHash -LiteralPath $exe).Hash

@@ -17,5 +17,29 @@
     "KeyviewerStyle.cs": "d1e1f99ea5be4a6583a89267e555cf5ecde4f1eed664064fafb297afe49942a6",
     "FootKeyviewerStyle.cs": "cbd7c2a62973033118862bfe20f8b034a903767c9366d5f49b8079b4921a3e6f",
     "AsyncInputHook.cs": "5faa392bcfba2b55fdd524945df58f99a8562da35fca04e922309d64b15ab26a"
-  }
+  },
+  "derivedFiles": [
+    "src/Mod/Features/KeyViewer/Configuration/KeyViewerColors.cs",
+    "src/Mod/Features/KeyViewer/Configuration/KeyViewerCounterPalette.cs",
+    "src/Mod/Features/KeyViewer/Configuration/KeyViewerSetting.cs",
+    "src/Mod/Features/KeyViewer/Input/KeyEventClock.cs",
+    "src/Mod/Features/KeyViewer/Input/KeyKpsWindow.cs",
+    "src/Mod/Features/KeyViewer/Input/KeyTransitionState.cs",
+    "src/Mod/Features/KeyViewer/Input/KeyViewer.Input.cs",
+    "src/Mod/Features/KeyViewer/Layout/FootKeyviewerStyle.cs",
+    "src/Mod/Features/KeyViewer/Layout/KeyViewerGeometry.cs",
+    "src/Mod/Features/KeyViewer/Layout/KeyViewerSlot.cs",
+    "src/Mod/Features/KeyViewer/Layout/KeyviewerStyle.cs",
+    "src/Mod/Features/KeyViewer/Presentation/Key.cs",
+    "src/Mod/Features/KeyViewer/Presentation/KeyViewer.cs",
+    "src/Mod/Features/KeyViewer/Presentation/KeyViewer.Layout.cs",
+    "src/Mod/Features/KeyViewer/Rain/Rain.cs",
+    "src/Mod/Features/KeyViewer/Rain/RainManager.cs",
+    "src/Mod/Features/KeyViewer/Rain/RainPool.cs",
+    "src/Mod/Features/KeyViewer/Rain/RawRain.cs",
+    "src/Mod/Infrastructure/Persistence/KeyCountData.cs",
+    "src/Mod/Integration/Adofai/Input/AsyncInputHook.cs",
+    "src/Mod/Integration/Adofai/Input/RawGhostInputPatch.cs"
+  ],
+  "modifications": "Ghostify adapts rendering to uGUI/TMP, separates persistence, queues SkyHook events, adds input recovery, ghost rain routing, configurable gaps, colors and 4/8-key layouts. Original copyright and BSD terms remain applicable to derived portions."
 }

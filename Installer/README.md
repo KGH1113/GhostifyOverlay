@@ -16,7 +16,7 @@ Windows 10/11용 단일 EXE입니다. .NET Framework 4.8과 **Unity Mod Manager 
 
 ## 동봉된 고지
 
-키뷰어 코드의 BSD-3-Clause 전문과 Gmarket Sans / Noto Sans KR의 라이선스를 소스 및 EXE·ZIP에 포함합니다. 파일 위치는 [출처·라이선스 목록](../THIRD-PARTY-NOTICES.md)에 있습니다. 패키징 전에 `Verify-Notices.ps1`로 고지 파일과 원문 지문을 확인하며 누락·내용 변경 시 빌드를 중단합니다.
+키뷰어 코드의 BSD-3-Clause 전문과 Gmarket Sans / Noto Sans KR의 라이선스를 소스 및 EXE·ZIP에 포함합니다. 파일 위치는 [출처·라이선스 목록](../THIRD-PARTY-NOTICES.md)에 있습니다. 패키징 전에 `Verify-Notices.ps1`로 원문 지문·소스 저작권 표시·출처 목록을 확인합니다. 생성한 EXE와 ZIP에는 `LICENSE.md` 정책도 동봉하며, `Verify-DistributionNotices.ps1`이 실제 내부 파일과 원본의 SHA256 및 EXE manifest를 비교합니다. 누락·중복·변경된 고지 또는 추가 의존 DLL이 있으면 빌드를 중단합니다.
 
 ## 제작과 검사
 

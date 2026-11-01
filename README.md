@@ -46,6 +46,6 @@
 
 레벨은 파일 경로 대신 타일 데이터와 주요 플레이 이벤트의 해시로 구분합니다. 같은 맵은 파일을 옮기거나 이름을 바꿔도 Full 기록을 공유하며, 같은 경로의 타일·주요 이벤트가 바뀌면 별도로 집계합니다. 기존 경로 기록은 해당 경로의 맵을 열 때 해시 기록으로 이전합니다. 확인할 수 없는 이전 경로의 기록도 삭제하지 않습니다.
 
-[출처·라이선스](THIRD-PARTY-NOTICES.md) · [AI 생성 코드 기록](AI_ATTRIBUTION.md)
+[라이선스 정책](LICENSE.md) · [출처·라이선스](THIRD-PARTY-NOTICES.md) · [AI 생성 코드 기록](AI_ATTRIBUTION.md)
 
 [개발 문서](docs/README.md) · [코드 구조](docs/architecture/ARCHITECTURE.md)

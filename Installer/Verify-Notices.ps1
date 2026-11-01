@@ -20,3 +20,25 @@ foreach($entry in $notices.GetEnumerator()){
     if($hash -ne $entry.Value){throw ('Third-party notice differs from its reviewed full text: '+$entry.Key)}
     'PASS complete third-party notice '+$entry.Key
 }
+
+foreach($relative in @('LICENSE.md','THIRD-PARTY-NOTICES.md','Licenses/JipperResourcePack-source.json','Assets/NotoSansKR-source.json')) {
+    if(!(Test-Path -LiteralPath (Join-Path $Root $relative) -PathType Leaf)){throw ('Missing license policy or provenance: '+$relative)}
+}
+$provenance=Get-Content -LiteralPath (Join-Path $Root 'Licenses/JipperResourcePack-source.json') -Raw -Encoding UTF8|ConvertFrom-Json
+if($provenance.commit -ne 'ac6d6410571ee7d585aedce7f5085de34f615af2' -or !$provenance.derivedFiles.Count){throw 'Missing upstream commit or derived source inventory'}
+if(Test-Path -LiteralPath (Join-Path $Root 'src/Mod')) {
+    foreach($relative in $provenance.derivedFiles){
+        if($relative -notmatch '^src/Mod/[A-Za-z0-9_/.-]+\.cs$' -or $relative.Contains('..')){throw 'Invalid provenance source path'}
+        $source=Join-Path $Root $relative
+        if(!(Test-Path -LiteralPath $source -PathType Leaf)){throw ('Missing attributed source: '+$relative)}
+        $text=[IO.File]::ReadAllText($source)
+        if($text -notmatch '\A// Derived from JipperResourcePack by Jongyeol\. Copyright \(c\) 2024, Jongyeol\.' -or $text -notmatch 'Licenses/JipperResourcePack-BSD-3-Clause.txt'){throw ('Missing upstream copyright or license reference: '+$relative)}
+    }
+    foreach($file in Get-ChildItem -LiteralPath (Join-Path $Root 'src/Mod') -Filter *.cs -Recurse){
+        if([IO.File]::ReadAllText($file.FullName) -match '\A// (Derived from|Adapted from) JipperResourcePack'){
+            $relative=$file.FullName.Substring([IO.Path]::GetFullPath($Root).TrimEnd('\','/').Length+1).Replace('\','/')
+            if($provenance.derivedFiles -cnotcontains $relative){throw ('Attributed source missing from provenance inventory: '+$relative)}
+        }
+    }
+    'PASS upstream copyright headers and source inventory'
+}

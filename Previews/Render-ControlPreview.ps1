@@ -74,5 +74,5 @@ public static void Save(string path,string fontPath){
 }
 '@
 Add-Type -TypeDefinition ($header+$constants+$methods+$renderer) -ReferencedAssemblies System.Drawing.dll
-[GhostifyControlPreview]::Save((Join-Path $PSScriptRoot 'Controls-0.2.9.png'),(Join-Path $project 'Assets\GoogleSans-Regular.ttf'))
+[GhostifyControlPreview]::Save((Join-Path $PSScriptRoot 'Controls-0.2.9.png'),(Join-Path $project 'Assets\GmarketSansTTFMedium.ttf'))
 'Production shape preview rendered; not a Unity screenshot.'
