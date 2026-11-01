@@ -6,6 +6,14 @@
 - **키뷰어** — 손·발 입력, 고스트 레인, KPS, 누적 입력 횟수
 - **커스터마이징** — 표시 항목, 위치·크기, 색상·행간, 이름을 붙여 저장하는 키 배치 프리셋
 
+## 다운로드
+
+**[Windows 설치 파일 받기 · v0.5.1 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.1/GhostifyOverlay-Setup-0.5.1.exe)**
+
+[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.1/GhostifyOverlay-0.5.1.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.1/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
+
+처음 설치하거나 업데이트할 때는 **EXE**를 사용하면 됩니다.
+
 ## 설치
 
 | 항목 | 지원 환경 |
@@ -15,7 +23,7 @@
 | 모드 매니저 | Unity Mod Manager 0.32.5 이상 |
 | 실행 환경 | .NET Framework 4.8 |
 
-1. 설치 파일 `GhostifyOverlay-Setup-0.5.1.exe`를 준비합니다.
+1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.1.exe`를 다운로드합니다.
 2. **게임을 종료한 뒤** EXE를 실행합니다.
 3. 게임 폴더를 확인하고 **설치하기 / 업데이트**를 누릅니다.
 4. 게임을 실행하고 Unity Mod Manager에서 **Ghostify Overlay**를 활성화합니다.
