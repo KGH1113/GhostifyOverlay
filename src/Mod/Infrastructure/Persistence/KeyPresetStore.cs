@@ -16,7 +16,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
         internal static string DirectoryPath => Path.Combine(KeyViewerStore.DirectoryPath, "KeyPresets");
         internal static void Initialize()
         {
-            var defaults = new[] { 10, 12, 16 }.Select(count => {
+            var defaults = new[] { 4, 8, 10, 12, 16 }.Select(count => {
                 var settings = new KeyViewerSetting { KeyViewerStyle = HandStyle(count) };
                 return new KeyBindingPreset { Id = "builtin-" + count, Name = "기본 " + count + "키", Data = Capture(settings) };
             }).ToArray();
@@ -35,7 +35,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
         internal static bool ValidKey(int key) => Enum.IsDefined(typeof(KeyCode), key) || key >= 0x1000 && key <= 0x10fff;
         internal static KeyBindingData Capture(KeyViewerSetting settings)
         {
-            int hand = settings.KeyViewerStyle == KeyviewerStyle.Key10 ? 10 : settings.KeyViewerStyle == KeyviewerStyle.Key12 ? 12 : 16;
+            int hand = settings.KeyViewerStyle == KeyviewerStyle.Key4 ? 4 : settings.KeyViewerStyle == KeyviewerStyle.Key8 ? 8 : settings.KeyViewerStyle == KeyviewerStyle.Key10 ? 10 : settings.KeyViewerStyle == KeyviewerStyle.Key12 ? 12 : 16;
             int foot = settings.FootKeyViewerStyle == FootKeyviewerStyle.None ? 0 : settings.FootKeyViewerStyle == FootKeyviewerStyle.Key2 ? 2 : settings.FootKeyViewerStyle == FootKeyviewerStyle.Key4 ? 4 : settings.FootKeyViewerStyle == FootKeyviewerStyle.Key8 ? 8 : 16;
             var type = typeof(KeyViewerSetting);
             return new KeyBindingData {
@@ -59,7 +59,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
             }
             settings.KeyViewerStyle = HandStyle(copy.HandCount); settings.FootKeyViewerStyle = FootStyle(copy.FootCount);
         }
-        internal static KeyviewerStyle HandStyle(int count) => count == 10 ? KeyviewerStyle.Key10 : count == 12 ? KeyviewerStyle.Key12 : KeyviewerStyle.Key16;
+        internal static KeyviewerStyle HandStyle(int count) => count == 4 ? KeyviewerStyle.Key4 : count == 8 ? KeyviewerStyle.Key8 : count == 10 ? KeyviewerStyle.Key10 : count == 12 ? KeyviewerStyle.Key12 : KeyviewerStyle.Key16;
         internal static FootKeyviewerStyle FootStyle(int count) => count == 0 ? FootKeyviewerStyle.None : count == 2 ? FootKeyviewerStyle.Key2 : count == 4 ? FootKeyviewerStyle.Key4 : count == 8 ? FootKeyviewerStyle.Key8 : FootKeyviewerStyle.Key16;
         [Serializable]
         internal sealed class PresetFile

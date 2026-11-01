@@ -22,7 +22,7 @@ $geometry=T 'KeyViewerContents.KeyViewerGeometry'
 foreach($style in [Enum]::GetValues((T 'KeyViewerContents.KeyviewerStyle'))){foreach($footer in @($false,$true)){foreach($gap in @([float]0,[float]4,[float]12,[float]30)){
     $slots=@(Call $geometry 'HandsWithGap' @($style,$footer,$gap));$keys=@($slots|Where-Object {(F $_ 'Index') -ge 0});$top=@($keys|Where-Object {(F $_ 'RainRow') -eq 0}|Sort-Object {F $_ 'X'})
     Check (@($keys|Where-Object {(F $_ 'Width') -ne 50 -or (F $_ 'Height') -ne 50}).Count -eq 0) ('hand sizes remain fixed '+$style+'/'+$footer+'/'+$gap)
-    Check (@(1..7|Where-Object {[Math]::Abs((F $top[$_] 'X')-(F $top[$_-1] 'X')-50-$gap) -gt .0001}).Count -eq 0) ('horizontal gaps match '+$style+'/'+$footer+'/'+$gap)
+    Check (@(1..($top.Count-1)|Where-Object {[Math]::Abs((F $top[$_] 'X')-(F $top[$_-1] 'X')-50-$gap) -gt .0001}).Count -eq 0) ('horizontal gaps match '+$style+'/'+$footer+'/'+$gap)
     foreach($slot in $keys){$source=F $slot 'RainSource';if($source -ge 0){$upper=@($top|Where-Object {(F $_ 'Index') -eq $source})[0];Check ((F $slot 'X') -eq (F $upper 'X')) ('lower key remains aligned to its shared rain '+$style+'/'+$gap+'/'+(F $slot 'Index'))}}
     if($gap -eq 4){$original=@(Call $geometry 'Hands' @($style,$footer));$actual=($slots|ForEach-Object {"$(F $_ 'Index')/$(F $_ 'X')/$(F $_ 'Y')/$(F $_ 'Width')"}) -join ',';$expected=($original|ForEach-Object {"$(F $_ 'Index')/$(F $_ 'X')/$(F $_ 'Y')/$(F $_ 'Width')"}) -join ',';Check ($actual -eq $expected) ('default geometry unchanged '+$style+'/'+$footer)}
 }}}

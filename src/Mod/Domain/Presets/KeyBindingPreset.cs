@@ -21,7 +21,7 @@ namespace GhostifyOverlay.Domain.Presets
             HandNames.SequenceEqual(other.HandNames) && FootNames.SequenceEqual(other.FootNames);
         internal void Validate(Func<int, bool> validKey)
         {
-            if (HandCount != 10 && HandCount != 12 && HandCount != 16) throw new ArgumentException("지원하지 않는 손 배치입니다.");
+            if (HandCount != 4 && HandCount != 8 && HandCount != 10 && HandCount != 12 && HandCount != 16) throw new ArgumentException("지원하지 않는 손 배치입니다.");
             if (FootCount != 0 && FootCount != 2 && FootCount != 4 && FootCount != 8 && FootCount != 16) throw new ArgumentException("지원하지 않는 발 배치입니다.");
             ValidateKeys(HandKeys, HandCount, validKey); ValidateKeys(FootKeys, FootCount, validKey); ValidateKeys(GhostKeys, HandCount, validKey);
             ValidateNames(HandNames, HandCount); ValidateNames(FootNames, FootCount);

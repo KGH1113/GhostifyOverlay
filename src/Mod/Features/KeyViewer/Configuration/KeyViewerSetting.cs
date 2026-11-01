@@ -6,6 +6,12 @@ namespace DonQuixoteOverlay.KeyViewerContents
     [System.Serializable]
     public class KeyViewerSetting
     {
+        public KeyCode[] key4 = [KeyCode.Alpha2, KeyCode.E, KeyCode.Keypad1, KeyCode.KeypadDivide];
+        public string[] key4Text = new string[4];
+        public KeyCode[] GhostKey4 = [KeyCode.W, KeyCode.R, KeyCode.Keypad7, KeyCode.Keypad8];
+        public KeyCode[] key8 = [KeyCode.Tab, KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.E, KeyCode.PageDown, KeyCode.Keypad1, KeyCode.KeypadDivide, KeyCode.Keypad9];
+        public string[] key8Text = new string[8];
+        public KeyCode[] GhostKey8 = [KeyCode.None, KeyCode.None, KeyCode.W, KeyCode.R, KeyCode.End, KeyCode.Keypad7, KeyCode.None, KeyCode.None];
         public int SchemaVersion = 5;
         public KeyviewerStyle KeyViewerStyle = KeyviewerStyle.Key10;
         public FootKeyviewerStyle FootKeyViewerStyle = FootKeyviewerStyle.None;

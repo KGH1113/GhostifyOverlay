@@ -223,12 +223,16 @@ namespace DonQuixoteOverlay.KeyViewerContents
 
         public static KeyCode[] GetKeyCode() => Settings.KeyViewerStyle switch
         {
+            KeyviewerStyle.Key4 => Settings.key4,
+            KeyviewerStyle.Key8 => Settings.key8,
             KeyviewerStyle.Key12 => Settings.key12,
             KeyviewerStyle.Key16 => Settings.key16,
             _ => Settings.key10
         };
         public static KeyCode[] GetGhostKeyCode() => Settings.KeyViewerStyle switch
         {
+            KeyviewerStyle.Key4 => Settings.GhostKey4,
+            KeyviewerStyle.Key8 => Settings.GhostKey8,
             KeyviewerStyle.Key12 => Settings.GhostKey12,
             KeyviewerStyle.Key16 => Settings.GhostKey16,
             _ => Settings.GhostKey10
@@ -242,6 +246,8 @@ namespace DonQuixoteOverlay.KeyViewerContents
             _ => Array.Empty<KeyCode>()};
         public static string[] GetKeyText() => Settings.KeyViewerStyle switch
         {
+            KeyviewerStyle.Key4 => Settings.key4Text,
+            KeyviewerStyle.Key8 => Settings.key8Text,
             KeyviewerStyle.Key12 => Settings.key12Text,
             KeyviewerStyle.Key16 => Settings.key16Text,
             _ => Settings.key10Text

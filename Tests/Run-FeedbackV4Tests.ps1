@@ -71,7 +71,7 @@ foreach($taskFootStyle in @('3','"Key6"')) {
 foreach($taskPair in @(@('KeyViewerContents.KeyviewerStyle',3,'Key10'),@('KeyViewerContents.FootKeyviewerStyle',4,'Key8'),@('KeyViewerContents.FootKeyviewerStyle',5,'Key16'))){
     Check ([Enum]::ToObject((T $taskPair[0]),$taskPair[1]).ToString() -eq $taskPair[2]) ('unchanged saved enum number: '+$taskPair[2])
 }
-Check ([Enum]::GetNames((T 'KeyViewerContents.KeyviewerStyle')) -join ',' -eq 'Key12,Key16,Key10') 'only 10 / 12 / 16 hand layouts remain available'
+Check ([Enum]::GetNames((T 'KeyViewerContents.KeyviewerStyle')) -join ',' -eq 'Key12,Key16,Key10,Key4,Key8') '4 / 8 / 10 / 12 / 16 hand layouts are available without restoring 20 keys'
 Check ([Enum]::GetNames((T 'KeyViewerContents.FootKeyviewerStyle')) -join ',' -eq 'None,Key2,Key4,Key8,Key16') '6-foot-key layout is absent from the available styles'
 foreach($taskType in @((T 'KeyViewerContents.KeyviewerStyle'),(T 'KeyViewerContents.FootKeyviewerStyle'))){
     $taskNext=(T 'SettingsWindow').GetMethod('NextStyle',$taskFlags).MakeGenericMethod($taskType)

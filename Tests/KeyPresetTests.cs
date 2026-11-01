@@ -39,7 +39,7 @@ public static class KeyPresetTests
         original.KeyGap = 17; original.XLocation = 99; original.useRain = false; original.SyncNativeInputKeys = false;
         KeyViewerStore.Settings = original; KeyViewerStore.DirectoryPath = root;
         KeyPresetStore.Initialize(); var service = KeyPresetStore.Service; var captured = KeyPresetStore.Capture(original);
-        Check(service.Items.Length == 4 && service.Items.Count(p => p.BuiltIn) == 3, "initialization provides built-in 10/12/16 and existing-user preset");
+        Check(service.Items.Length == 6 && service.Items.Count(p => p.BuiltIn) == 5, "initialization provides built-in 4/8/10/12/16 and existing-user preset");
         var existing = service.Find(service.ActiveId);
         Check(existing.Name == "기존 설정" && existing.Data.SameAs(captured), "first migration captures exact existing keys and names without replacing defaults");
         Check(!service.IsModified(captured), "initial existing profile is not marked modified");
@@ -66,7 +66,7 @@ public static class KeyPresetTests
         Reject(() => service.Delete("builtin-10"), "built-in presets cannot be deleted");
         Reject(() => service.Overwrite("builtin-12", captured), "built-in presets require a user copy");
         Reject(() => service.Rename("builtin-16", "changed"), "built-in preset names remain stable");
-        foreach (int hand in new[] {10,12,16}) foreach (int foot in new[] {0,2,4,8,16}) {
+        foreach (int hand in new[] {4,8,10,12,16}) foreach (int foot in new[] {0,2,4,8,16}) {
             var settings = new KeyViewerSetting { KeyViewerStyle = KeyPresetStore.HandStyle(hand), FootKeyViewerStyle = KeyPresetStore.FootStyle(foot) };
             var data = KeyPresetStore.Capture(settings); data.HandNames[hand-1] = "끝 키";
             if (foot > 0) data.FootNames[foot-1] = "발 끝";
@@ -74,6 +74,17 @@ public static class KeyPresetTests
             KeyPresetStore.Apply(target,data);
             Check(KeyPresetStore.Capture(target).SameAs(data), "round-trip each supported hand/foot combination: " + hand + "/" + foot);
             if (hand != 12) Check(target.key12[0] == KeyCode.F12, "inactive 12-key configuration is preserved: " + hand + "/" + foot);
+        }
+        foreach (int count in new[] {4,8}) {
+            var small = new KeyViewerSetting { KeyViewerStyle = KeyPresetStore.HandStyle(count) };
+            var data = KeyPresetStore.Capture(small); data.HandNames[0] = "별명 " + count; data.GhostKeys[0] = (int)KeyCode.F12;
+            string smallId = service.SaveNew(count + "키 저장", data, false);
+            KeyPresetStore.Initialize(); service = KeyPresetStore.Service;
+            var restored = service.Apply(smallId, KeyPresetStore.Capture(original)); KeyPresetStore.Apply(original, restored);
+            Check(KeyPresetStore.Capture(original).SameAs(data), "small layout keys, names and ghost bindings survive reopening: " + count);
+            string smallFile = KeyPresetStore.Export(smallId); string smallImport = KeyPresetStore.Import(smallFile);
+            Check(service.Find(smallImport).Data.SameAs(data), "small layout export/import preserves exact bindings: " + count);
+            Check(service.Find(id).Data.HandCount == 10, "small layout does not change an existing 10-key preset: " + count);
         }
         var invalid = captured.Clone(); invalid.HandCount = 20; Reject(() => service.SaveNew("invalid hand", invalid), "removed 20-key layout rejected");
         invalid = captured.Clone(); invalid.FootCount = 6; Reject(() => service.SaveNew("invalid foot", invalid), "removed 6-key foot layout rejected");

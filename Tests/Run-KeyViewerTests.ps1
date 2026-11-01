@@ -69,4 +69,8 @@ Assert ($restored.Count[0] -eq 2147483648 -and @(Get-ChildItem -LiteralPath $fix
 $references=$mod.GetReferencedAssemblies().Name
 Assert (!($references -contains 'JALib') -and !($references -contains 'DOTween') -and !($references -contains 'UnityEngine.IMGUIModule')) 'standalone Release uses uGUI without the UMM image bridge, JALib or DOTween'
 Assert (Test-Path -LiteralPath (Join-Path $project 'bin\Release\GhostifyOverlay\Licenses\JipperResourcePack-BSD-3-Clause.txt')) 'upstream BSD license ships with Release'
+foreach($count in @(4,8)) {
+    $small=Invoke-Test (T 'KeyViewerStore') 'Deserialize' @('{"SchemaVersion":5,"KeyViewerStyle":"Key'+$count+'","key'+$count+'":[13],"key'+$count+'Text":["저장 이름"],"GhostKey'+$count+'":[292]}')
+    Assert ($small.KeyViewerStyle.ToString() -eq ('Key'+$count) -and $small.GetType().GetField('key'+$count).GetValue($small).Length -eq $count -and $small.GetType().GetField('key'+$count+'Text').GetValue($small)[0] -eq '저장 이름') ('small layouts normalize and retain stored names: '+$count)
+}
 "Key viewer assertions passed: $passed"

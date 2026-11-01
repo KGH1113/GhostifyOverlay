@@ -33,7 +33,7 @@ $geometry=T 'KeyViewerContents.KeyViewerGeometry'
 foreach($style in [Enum]::GetValues((T 'KeyViewerContents.KeyviewerStyle'))){
     foreach($footer in @($false,$true)){
         $slots=@(Call $geometry 'Hands' @($style,$footer));$hands=@($slots|Where-Object {(Field $_ 'Index') -ge 0})
-        $expected=switch($style.ToString()){'Key10'{10};'Key12'{12};'Key16'{16}}
+        $expected=switch($style.ToString()){'Key4'{4};'Key8'{8};'Key10'{10};'Key12'{12};'Key16'{16}}
         Check ($hands.Count -eq $expected -and @($hands|ForEach-Object {Field $_ 'Index'}|Sort-Object -Unique).Count -eq $expected) ('preview / runtime geometry contains each key once: '+$style+'/'+$footer)
         if($style.ToString() -eq 'Key16'){Check (@($hands|Where-Object {(Field $_ 'Width') -ne 50 -or (Field $_ 'Height') -ne 50}).Count -eq 0) ('all sixteen hand keys retain upstream 50 x 50 size: '+$footer)}
         foreach($slot in $hands){$source=Field $slot 'RainSource';if($source -ge 0){Check (@($hands|Where-Object {(Field $_ 'Index') -eq $source -and (Field $_ 'RainRow') -eq 0}).Count -eq 1) ('lower key shares an existing top rain lane: '+$style+'/'+(Field $slot 'Index'))}}
@@ -66,12 +66,13 @@ Call (T 'OverlayPalette') 'Reset' @($settings.Overlay)|Out-Null
 Check (!$settings.Overlay.ShowFps -and $settings.Overlay.FullAttempts['path:map-A'] -eq 7) 'color reset preserves visibility and full attempt records'
 $fixedX=(T 'DQColors').GetField('XPerfect',$taskFlags).GetValue($null)
 Check ((Call (T 'KeyViewerContents.KeyViewerColorConverter') 'Format' @($fixedX)) -eq '#FFFFFFFF') 'fixed center X remains white'
+$resetValue=Call (T 'KeyViewerContents.KeyViewerColorConverter') 'Format' @($settings.Overlay.ValueColor)
 $palette=[Activator]::CreateInstance((T 'ColorPaletteState'),$taskFlags,$null,@($red),$null)
 Check ((Call (T 'KeyViewerContents.KeyViewerColorConverter') 'Format' @($palette.GetType().GetProperty('Color',$taskFlags).GetValue($palette,$null))) -eq '#FF000080') 'opening HSV palette preserves its original HEX and alpha'
 Check (!(Call $palette 'TryHex' @('not-a-color'))) 'invalid palette HEX does not replace draft color'
 Check ((Call $palette 'TryHex' @('#00C8FFFF'))) 'valid sky blue HEX updates palette draft'
 Check ((Call (T 'KeyViewerContents.KeyViewerColorConverter') 'Format' @($palette.GetType().GetProperty('Color',$taskFlags).GetValue($palette,$null))) -eq '#00C8FFFF') 'HEX and HSV palette round-trip saturated sky blue'
-Check ((Call (T 'KeyViewerContents.KeyViewerColorConverter') 'Format' @($settings.Overlay.ValueColor)) -eq '#FFC939FF') 'draft palette edits leave numeric color unchanged until application'
+Check ((Call (T 'KeyViewerContents.KeyViewerColorConverter') 'Format' @($settings.Overlay.ValueColor)) -eq $resetValue) 'draft palette edits leave numeric color unchanged until application'
 $keySettings=[Activator]::CreateInstance((T 'KeyViewerContents.KeyViewerSetting'))
 Check ((Call (T 'KeyViewerContents.KeyViewerColorConverter') 'Format' @($keySettings.GhostRainColor)) -eq '#0EB4FCFF') 'default ghost rain matches requested auxiliary sky blue'
 $keySettings.SchemaVersion=3;$keySettings.GhostRainColor=[UnityEngine.Color]::white;Call (T 'KeyViewerContents.KeyViewerStore') 'Normalize' @($keySettings)|Out-Null

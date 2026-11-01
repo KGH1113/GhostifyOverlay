@@ -12,6 +12,17 @@ namespace DonQuixoteOverlay.KeyViewerContents
             gap = Gap(gap);
             float step = 50 + gap, span = 400 + 7 * gap, delta = gap - KeyViewerMetrics.Gap;
             var result = new List<KeyViewerSlot>();
+            if (style == KeyviewerStyle.Key4 || style == KeyviewerStyle.Key8)
+            {
+                int count = style == KeyviewerStyle.Key4 ? 4 : 8;
+                float width = count * 50 + (count - 1) * gap;
+                for (int i = 0; i < count; i++)
+                    result.Add(new KeyViewerSlot(i, step * i, 79 + delta, 50, 0));
+                float half = (width - gap) / 2;
+                result.Add(new KeyViewerSlot(-1, 0, 25, half, -1));
+                result.Add(new KeyViewerSlot(-2, half + gap, 25, half, -1));
+                return result;
+            }
             float top = style == KeyviewerStyle.Key16 ? (footer ? 115 + 2 * delta : 85 + delta) : 79 + delta;
             for (int i = 0; i < 8; i++)
                 result.Add(new KeyViewerSlot(i, step * i, top, 50, 0));

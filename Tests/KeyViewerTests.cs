@@ -110,6 +110,19 @@ public static class KeyViewerTests {
         Call(clock,"Reset");Check((long)Call(clock,"Convert",epoch-500,400L)==400L,"focus/scene clock reset uses a fresh offset");
     }
     private static void Rows() {
+        foreach(int count in new[]{4,8}) foreach(float gap in new[]{0f,3f,30f}) {
+            var style=EnumValue("KeyviewerStyle","Key"+count);
+            object settings=New("KeyViewerSetting");Set(settings,"KeyViewerStyle",style);Set(T("KeyViewerStore"),"Settings",settings);
+            Check(((Array)Call(T("KeyViewer"),"GetKeyCode")).Length==count && ((Array)Call(T("KeyViewer"),"GetGhostKeyCode")).Length==count && ((Array)Call(T("KeyViewer"),"GetKeyText")).Length==count,"selected small layout exposes exactly its hand, ghost and name slots: "+count);
+            var slots=((IEnumerable)Call(T("KeyViewerGeometry"),"HandsWithGap",style,true,gap)).Cast<object>().ToArray();
+            var hands=slots.Where(s=>(int)Get(s,"Index")>=0).OrderBy(s=>(int)Get(s,"Index")).ToArray();
+            Check(hands.Length==count && slots.Length==count+2,"small layout has no extra keys and retains KPS/Total: "+count+" gap "+gap);
+            Check(hands.Select(s=>(int)Get(s,"Index")).SequenceEqual(Enumerable.Range(0,count)) && hands.All(s=>(float)Get(s,"Width")==50f && (int)Get(s,"RainRow")==0 && (int)Get(s,"RainSource")==-1),"small layout has square keys and independent upper rains: "+count);
+            Check(hands.Select((s,i)=>Math.Abs((float)Get(s,"X")-i*(50+gap))<.001).All(v=>v),"small layout preserves key size while changing gaps: "+count+" gap "+gap);
+            var kps=slots.Single(s=>(int)Get(s,"Index")==-1);var total=slots.Single(s=>(int)Get(s,"Index")==-2);
+            float right=count*50+(count-1)*gap;
+            Check(Math.Abs((float)Get(total,"X")+(float)Get(total,"Width")-right)<.001 && Math.Abs((float)Get(total,"X")-(float)Get(kps,"Width")-gap)<.001,"small layout footer fits the exact row width: "+count+" gap "+gap);
+        }
         Check((float)T("KeyViewerMetrics").GetField("HandStep").GetRawConstantValue()==54f,"normal key rows retain upstream 54-unit spacing");
         Check((float)T("KeyViewerMetrics").GetField("HandSide").GetRawConstantValue()==50f,"hand frames retain the upstream 50-unit side");
         Check(T("KeyViewer").GetMethod("ArrangeRows",All)==null && T("KeyViewer").GetMethod("ExpandCount",All)==null,"counter changes cannot trigger frame growth or row reflow");

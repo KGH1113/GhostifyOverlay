@@ -62,7 +62,7 @@ namespace DonQuixoteOverlay
         {
             var row = Row(44);
             var hand = DarkNeonUi.Button("", row.transform, Vector2.zero, new Vector2(.48f, 1), UiButtonKind.Secondary,
-                () => Choose("손 배치", new[] { "10키", "12키", "16키" }, i => { KeyViewerStore.Settings.KeyViewerStyle = KeyPresetStore.HandStyle(new[] { 10, 12, 16 }[i]); ChangedKeyViewer(); }));
+                () => Choose("손 배치", new[] { "4키", "8키", "10키", "12키", "16키" }, i => { KeyViewerStore.Settings.KeyViewerStyle = KeyPresetStore.HandStyle(new[] { 4, 8, 10, 12, 16 }[i]); ChangedKeyViewer(); }));
             var foot = DarkNeonUi.Button("", row.transform, new Vector2(.52f, 0), Vector2.one, UiButtonKind.Secondary,
                 () => Choose("발 배치", new[] { "없음", "2키", "4키", "8키", "16키" }, i => { KeyViewerStore.Settings.FootKeyViewerStyle = KeyPresetStore.FootStyle(new[] { 0, 2, 4, 8, 16 }[i]); ChangedKeyViewer(); }));
             _refresh.Add(() => { hand.GetComponentInChildren<TMPro.TMP_Text>().text = "손: " + HandSize() + "키  ▾"; foot.GetComponentInChildren<TMPro.TMP_Text>().text = "발: " + (FootSize() == 0 ? "없음" : FootSize() + "키") + "  ▾"; });
