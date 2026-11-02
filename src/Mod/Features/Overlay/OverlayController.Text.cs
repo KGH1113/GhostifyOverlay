@@ -106,17 +106,20 @@ namespace DonQuixoteOverlay
             _xPerfectAboveMeter.text = NativeJudgments.FormatDetailedCounts(counts, "  ");
         }
 
+        private bool _lastShowAttempts;
         private void RefreshAttemptText()
         {
             int attempt = AttemptTracker.Attempts, progress = AttemptTracker.ProgressAttempts;
             int full = AttemptTracker.FullAttempts, fullProgress = AttemptTracker.FullProgressAttempts;
-            if (_lastAttempt == attempt && _lastProgressAttempt == progress && _lastFullAttempt == full && _lastFullProgressAttempt == fullProgress)
-                return;
+
+            bool visible = Main.Settings.Overlay.ShowAttempts;
+            if (_lastAttempt == attempt && _lastProgressAttempt == progress && _lastFullAttempt == full && _lastFullProgressAttempt == fullProgress && _lastShowAttempts == visible) return;
+            _lastShowAttempts = visible;
             _lastAttempt = attempt;
             _lastProgressAttempt = progress;
             _lastFullAttempt = full;
             _lastFullProgressAttempt = fullProgress;
-            _attempts.text = FormatAttempts(attempt, progress, full, fullProgress);
+            _attempts.text = Main.Settings.Overlay.ShowAttempts ? FormatAttempts(attempt, progress, full, fullProgress) : "";
         }
 
         private void GetMusicTimes(out int current, out int total)

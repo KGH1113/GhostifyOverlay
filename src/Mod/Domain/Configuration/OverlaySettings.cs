@@ -9,6 +9,40 @@ namespace DonQuixoteOverlay
     [Serializable]
     public sealed class OverlaySettings
     {
+        public OverlaySettings()
+        {
+            Enabled = true;
+            Group1Enabled = true;
+            Group2Enabled = true;
+            Group3Enabled = true;
+            Group4Enabled = true;
+            Group5Enabled = true;
+            ShowProgress = true;
+            ShowAccuracy = false;
+            ShowXAccuracy = true;
+            ShowMusicTime = true;
+            ShowMapTime = false;
+            ShowProgressBar = true;
+            ShowCombo = true;
+            ShowBpm = true;
+            ShowPitch = true;
+            ShowTheoreticalKps = false;
+            ShowJudgmentCounts = true;
+            ShowDetailedJudgments = true;
+            ShowAttempts = true;
+            ShowSongInfo = true;
+            ShowTimingRanges = true;
+            ShowFps = false;
+            Font = "Gmarket Sans";
+            LineSpacing = 0f;
+            ValueColor = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+            ProgressBarColor = new Color(255/255f, 201/255f, 57/255f, 255/255f);
+            AttemptsColor = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+        }
+
+        public bool Group6Enabled = true, ShowBestProgress = true;
+        public List<CustomOverlayText> CustomTexts = new List<CustomOverlayText>();
+        public Dictionary<string, float> BestProgress = new Dictionary<string, float>();
         public bool Enabled = true;
         public bool Group1Enabled = true, Group2Enabled = true, Group3Enabled = true, Group4Enabled = true, Group5Enabled = true;
         public bool ShowProgress = true;

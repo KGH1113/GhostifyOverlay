@@ -6,7 +6,13 @@ namespace UnityEngine {
     public sealed class AudioClip { public string name; }
     public sealed class AudioSource { public AudioClip clip; }
 }
+public enum States { PlayerControl, Fail, Fail2, Won }
+public sealed class FakeState {public States State=States.PlayerControl;public object GetState()=>State;}
+public sealed class FakeFloor {public int seqID;}
 public sealed class scrController {
+    public static scrController instance;
+    public FakeState stateMachine=new FakeState();
+    public FakeFloor currFloor=new FakeFloor();
     public bool gameworld=true,startedFromCheckpoint,noFail,noFailInfiniteMargin,freeroamInvulnerability;
     public string levelName="fixture";
     public static string currentWorldString;
@@ -23,7 +29,7 @@ public static class ADOBase { public static bool isLevelEditor,isOfficialLevel;p
 public static class RDC { public static bool auto; }
 namespace DonQuixoteOverlay {
     public sealed class OverlaySettings {
-        public Dictionary<string,int> FullAttempts=new Dictionary<string,int>(),FullProgressAttempts=new Dictionary<string,int>();
+        public Dictionary<string,float> BestProgress=new Dictionary<string,float>(); public Dictionary<string,int> FullAttempts=new Dictionary<string,int>(),FullProgressAttempts=new Dictionary<string,int>();
     }
     public sealed class DonQuixoteSettings { public OverlaySettings Overlay=new OverlaySettings(); }
     internal static class Main {
@@ -93,6 +99,22 @@ namespace DonQuixoteOverlay {
             Check(AttemptTracker.Attempts==1,"pending setup does not count while gameworld is false");
             c.gameworld=true;Next(c);Check(AttemptTracker.Attempts==2,"gameworld becoming ready lets the prepared attempt complete");
             HashTests();
+            c.noFail=c.noFailInfiniteMargin=c.startedFromCheckpoint=false;RDC.auto=false;c.gameworld=true;
+            AttemptTracker.EndSession(); c.stateMachine.State=States.PlayerControl; AttemptTracker.BeginRun(c,0);
+            c.currFloor.seqID=42;AttemptTracker.Tick(c);c.stateMachine.State=States.Fail;AttemptTracker.Tick(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.42f)<.0001,"death stores the best tile progress from a full eligible run");
+            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);c.currFloor.seqID=12;AttemptTracker.Tick(c);c.stateMachine.State=States.Fail;AttemptTracker.Tick(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.42f)<.0001,"a shorter run cannot lower a map best");
+            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,10);c.currFloor.seqID=90;AttemptTracker.Tick(c);c.stateMachine.State=States.Fail;AttemptTracker.Tick(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.42f)<.0001,"practice start cannot set the full-run best");
+            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);c.currFloor.seqID=80;AttemptTracker.Tick(c);c.noFail=true;AttemptTracker.Tick(c);c.noFail=false;c.currFloor.seqID=99;c.stateMachine.State=States.Fail;AttemptTracker.Tick(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.42f)<.0001,"enabling and disabling no-fail mid-run permanently excludes that run");
+            RDC.auto=true;c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);RDC.auto=false;c.currFloor.seqID=99;AttemptTracker.Tick(c);c.stateMachine.State=States.Fail;AttemptTracker.Tick(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.42f)<.0001,"autoplay at start cannot set the best even after disabling it");
+            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);c.currFloor.seqID=60;AttemptTracker.Tick(c);ADOBase.isLevelEditor=false;c.gameworld=false;AttemptTracker.Tick(c);c.gameworld=true;
+            Check(Math.Abs(AttemptTracker.BestProgress-0f)<.0001 && Main.Settings.Overlay.BestProgress.ContainsValue(.6f),"leaving during a live run commits progress before clearing the current map key");
+            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);c.stateMachine.State=States.Won;AttemptTracker.Tick(c);
+            Check(AttemptTracker.BestProgress==1,"clearing a full eligible run stores 100 percent");
             return Results.ToArray();
         }
     }

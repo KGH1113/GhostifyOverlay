@@ -25,6 +25,12 @@ namespace DonQuixoteOverlay
                 value.Overlay.FullAttempts = new Dictionary<string, int>();
             if (value.Overlay.FullProgressAttempts == null)
                 value.Overlay.FullProgressAttempts = new Dictionary<string, int>();
+            value.Overlay.BestProgress = value.Overlay.BestProgress ?? new Dictionary<string, float>();
+            foreach (var key in new List<string>(value.Overlay.BestProgress.Keys)) value.Overlay.BestProgress[key] = Bounded(value.Overlay.BestProgress[key], 0, 1, 0);
+            value.Overlay.CustomTexts = value.Overlay.CustomTexts ?? new List<CustomOverlayText>();
+            value.Overlay.CustomTexts.RemoveAll(item => item == null);
+            if (value.Overlay.CustomTexts.Count > 50) value.Overlay.CustomTexts.RemoveRange(50, value.Overlay.CustomTexts.Count - 50);
+            foreach (var item in value.Overlay.CustomTexts) item.Normalize();
             value.Overlay.Font = "Gmarket Sans";
             OverlayPalette.Normalize(value.Overlay);
             return value;

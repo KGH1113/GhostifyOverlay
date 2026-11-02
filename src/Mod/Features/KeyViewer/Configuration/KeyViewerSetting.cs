@@ -7,6 +7,57 @@ namespace DonQuixoteOverlay.KeyViewerContents
     [System.Serializable]
     public class KeyViewerSetting
     {
+        public KeyViewerSetting()
+        {
+            KeyViewerStyle = (KeyviewerStyle)1;
+            FootKeyViewerStyle = (FootKeyviewerStyle)5;
+            key10 = new KeyCode[] { (KeyCode)9, (KeyCode)49, (KeyCode)50, (KeyCode)101, (KeyCode)281, (KeyCode)257, (KeyCode)267, (KeyCode)265, (KeyCode)32, (KeyCode)274 };
+            key10Text = new string[] { null, null, null, null, "Pg↓", "Num", "/", "9", "␣", "↓" };
+            GhostKey10 = new KeyCode[] { (KeyCode)0, (KeyCode)0, (KeyCode)119, (KeyCode)114, (KeyCode)279, (KeyCode)263, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0 };
+            key12 = new KeyCode[] { (KeyCode)9, (KeyCode)49, (KeyCode)50, (KeyCode)101, (KeyCode)281, (KeyCode)257, (KeyCode)267, (KeyCode)265, (KeyCode)32, (KeyCode)99, (KeyCode)274, (KeyCode)273 };
+            key12Text = new string[] { null, null, null, null, "Pg↓", "Num", "/", "9", "␣", null, "↓", "↑" };
+            GhostKey12 = new KeyCode[] { (KeyCode)0, (KeyCode)113, (KeyCode)119, (KeyCode)114, (KeyCode)279, (KeyCode)263, (KeyCode)264, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0 };
+            key16 = new KeyCode[] { (KeyCode)9, (KeyCode)49, (KeyCode)50, (KeyCode)101, (KeyCode)281, (KeyCode)257, (KeyCode)267, (KeyCode)265, (KeyCode)32, (KeyCode)99, (KeyCode)274, (KeyCode)273, (KeyCode)301, (KeyCode)306, (KeyCode)266, (KeyCode)259 };
+            key16Text = new string[] { null, null, null, null, "Pg↓", "Num", "/", "9", "␣", null, "↓", "↑", null, null, ".", "3" };
+            GhostKey16 = new KeyCode[] { (KeyCode)0, (KeyCode)0, (KeyCode)119, (KeyCode)114, (KeyCode)279, (KeyCode)263, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0, (KeyCode)0 };
+            footkey2 = new KeyCode[] { (KeyCode)289, (KeyCode)282 };
+            footkey4 = new KeyCode[] { (KeyCode)289, (KeyCode)283, (KeyCode)288, (KeyCode)282 };
+            footkey8 = new KeyCode[] { (KeyCode)289, (KeyCode)285, (KeyCode)288, (KeyCode)284, (KeyCode)287, (KeyCode)283, (KeyCode)286, (KeyCode)282 };
+            footkey16 = new KeyCode[] { (KeyCode)289, (KeyCode)285, (KeyCode)288, (KeyCode)284, (KeyCode)287, (KeyCode)283, (KeyCode)286, (KeyCode)282, (KeyCode)105, (KeyCode)107, (KeyCode)117, (KeyCode)106, (KeyCode)121, (KeyCode)104, (KeyCode)116, (KeyCode)103 };
+            footkey2Text = new string[] { null, null };
+            footkey4Text = new string[] { null, null, null, null };
+            footkey8Text = new string[] { null, null, null, null, null, null, null, null };
+            footkey16Text = new string[] { null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null };
+            YLocation = 200f;
+            Size = 0.99999994f;
+            KeyGap = 3f;
+            useRain = true;
+            useGhostRain = true;
+            rainSpeed = 100f;
+            rainHeight = 200f;
+            Enabled = true;
+            ViewerOnlyGameplay = true;
+            SyncNativeInputKeys = true;
+            XLocation = 2f;
+            Background = new Color(0/255f, 0/255f, 0/255f, 255/255f);
+            BackgroundClicked = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+            Outline = new Color(255/255f, 201/255f, 57/255f, 255/255f);
+            OutlineClicked = new Color(255/255f, 201/255f, 57/255f, 255/255f);
+            Text = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+            TextClicked = new Color(0/255f, 0/255f, 0/255f, 255/255f);
+            RainColor = new Color(255/255f, 201/255f, 57/255f, 255/255f);
+            RainColor2 = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+            GhostRainColor = new Color(14/255f, 180/255f, 252/255f, 255/255f);
+            KpsColors.Background = new Color(0/255f, 0/255f, 0/255f, 255/255f);
+            KpsColors.Outline = new Color(255/255f, 201/255f, 57/255f, 255/255f);
+            KpsColors.Text = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+            KpsColors.Value = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+            TotalColors.Background = new Color(0/255f, 0/255f, 0/255f, 255/255f);
+            TotalColors.Outline = new Color(255/255f, 201/255f, 57/255f, 255/255f);
+            TotalColors.Text = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+            TotalColors.Value = new Color(255/255f, 255/255f, 255/255f, 255/255f);
+        }
+
         public KeyCode[] key4 = [KeyCode.Alpha2, KeyCode.E, KeyCode.Keypad1, KeyCode.KeypadDivide];
         public string[] key4Text = new string[4];
         public KeyCode[] GhostKey4 = [KeyCode.W, KeyCode.R, KeyCode.Keypad7, KeyCode.Keypad8];

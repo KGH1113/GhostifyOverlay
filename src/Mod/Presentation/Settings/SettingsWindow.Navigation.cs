@@ -32,6 +32,7 @@ namespace DonQuixoteOverlay
         {
             NewPage("오버레이");
             BuildOverlayGroups();
+            AddCategory("6 · 커스텀 텍스트", BuildCustomTextSettings);
             AddCategory("공통 스타일", () => { BuildOverlayTypography(); BuildOverlayColors(); });
             NewPage("키뷰어");
             BuildKeyViewerPage();

@@ -61,7 +61,7 @@ namespace TMPro {
     public enum TextOverflowModes{Overflow,Ellipsis}
     public enum FontStyles{Normal,Bold}
     public class TMP_Text:Component {public string text="";public float fontSize,fontSizeMax,fontSizeMin;public bool raycastTarget,richText=true,enableAutoSizing;public Color color;public TextAlignmentOptions alignment;public TextWrappingModes textWrappingMode;public TextOverflowModes overflowMode;public FontStyles fontStyle;public RectTransform rectTransform=>transform;public Vector2 GetPreferredValues(string value,float width,float height)=>new Vector2(width,(float)Math.Ceiling((value??"").Length*Math.Max(fontSize,13)*.6/Math.Max(width,1))*Math.Max(fontSize,13)*1.4f);}
-    public class TMP_InputField:Component {public bool isFocused,interactable=true;public int characterLimit;public string text="";public TMP_Text textComponent;public readonly Signal<string> onSelect=new Signal<string>(),onEndEdit=new Signal<string>();public void SetTextWithoutNotify(string value){text=value;}public void ActivateInputField(){isFocused=true;}public void Edit(string value){text=value;onEndEdit.Invoke(value);}}
+    public class TMP_InputField:Component {public enum LineType {SingleLine,MultiLineNewline} public LineType lineType;public bool isFocused,interactable=true;public int characterLimit;public string text="";public TMP_Text textComponent;public readonly Signal<string> onSelect=new Signal<string>(),onEndEdit=new Signal<string>();public void SetTextWithoutNotify(string value){text=value;}public void ActivateInputField(){isFocused=true;}public void Edit(string value){text=value;onEndEdit.Invoke(value);}}
 }
 namespace DonQuixoteOverlay.KeyViewerContents {
     internal static class KeyViewerStore {internal static KeyViewerSetting Settings=new KeyViewerSetting();internal static string DirectoryPath;internal static int Saves;internal static void Save(){Saves++;}internal static KeyViewerSetting Normalize(KeyViewerSetting value)=>value;}
@@ -112,9 +112,9 @@ namespace DonQuixoteOverlay {
         private static IEnumerable<Transform> Walk(Transform root){yield return root;foreach(var child in root.Children)foreach(var value in Walk(child))yield return value;}
         public static string[] Run(string root){
             Checks.Clear();DarkNeonUi.Nodes.Clear();Main.Settings=new DonQuixoteSettings();Main.Root=new GameObject();var editor=Main.Root.AddComponent<LayoutEditorController>();
-            KeyViewerStore.Settings=new KeyViewerSetting();KeyViewerStore.DirectoryPath=root;KeyPresetStore.Initialize();
+            KeyViewerStore.Settings=new KeyViewerSetting { KeyViewerStyle=KeyviewerStyle.Key10 };KeyViewerStore.DirectoryPath=root;KeyPresetStore.Initialize();
             var w=new GameObject().AddComponent<SettingsWindow>();w.Awake();w.Build();w.SetVisible(true);
-            Check(w._views.Count==2&&w._views[0].Categories.Count==6&&w._views[1].Categories.Count==5,"production window retains two tabs with six overlay and five keyviewer categories");
+            Check(w._views.Count==2&&w._views[0].Categories.Count==7&&w._views[1].Categories.Count==5,"production window retains two tabs with seven overlay and five keyviewer categories");
             Check(w._panel.sizeDelta.x==960&&w._panel.sizeDelta.y==720,"outer window dimensions remain unchanged");
             Check(Main.Requests==0,"building and opening settings do not alter saved preferences");
             Check(w._views[1].Categories[0].Content.transform.sizeDelta.y<=720*.765f*.865f,"preset controls, key preview and inspector fit in the initial detail viewport");
@@ -139,6 +139,15 @@ namespace DonQuixoteOverlay {
                 float height=(rect.anchorMax.y-rect.anchorMin.y)*156+rect.offsetMax.y-rect.offsetMin.y;
                 Check(Math.Abs(height-44)<.001,"overlay member cards share 44px height: "+b.Label);
             }
+            w.SelectPage(0);w.SelectCategory(w._views[0],5);
+            Check(w._views[0].Categories[5].Button.Label.Contains("커스텀"),"custom text category is directly below attempts");
+            FindButton(w._views[0].Categories[5].Content.transform,"텍스트 추가").Press();
+            var customInput=Walk(w._dialog.transform).Select(t=>t.GetComponent<TMP_InputField>()).First(i=>i!=null);customInput.SetTextWithoutNotify("첫 텍스트");FindButton(w._dialog.transform,"저장 / 적용").Press();
+            Check(Main.Settings.Overlay.CustomTexts.Count==1&&w.SelectedCustom.Text=="첫 텍스트","custom text add dialog selects its new entry");
+            var contentInput=Walk(w._views[0].Categories[5].Content.transform).Select(t=>t.GetComponent<TMP_InputField>()).First(i=>i!=null&&i.characterLimit==2048);contentInput.Edit("literal <b>text</b>\nsecond line");
+            Check(w.SelectedCustom.Text.Contains("\nsecond line")&&contentInput.lineType==TMP_InputField.LineType.MultiLineNewline,"custom text editor preserves multiline literal content");
+            FindButton(w._views[0].Categories[5].Content.transform,"선택한 텍스트 삭제").Press();FindButton(w._dialog.transform,"확인").Press();
+            Check(Main.Settings.Overlay.CustomTexts.Count==0,"custom text deletion removes the selected entry");
             w.SelectPage(1);w.SelectCategory(w._views[1],0);w._selectedKey=0;w.RefreshKeyEditor();w._keyAlias.Edit("사용자 키 이름");
             Check(KeyViewerStore.Settings.key10Text[0]=="사용자 키 이름","production key inspector writes display alias");
             w.SavePresetAs();var nameInput=Walk(w._dialog.transform).Select(t=>t.GetComponent<TMP_InputField>()).First(i=>i!=null);nameInput.SetTextWithoutNotify("내 프리셋");FindButton(w._dialog.transform,"저장 / 적용").Press();

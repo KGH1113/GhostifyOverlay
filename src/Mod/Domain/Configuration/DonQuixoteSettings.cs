@@ -22,6 +22,7 @@ namespace DonQuixoteOverlay
             DonQuixoteSettings defaults = CreateDefault();
             if (previous == null || previous.Overlay == null)
                 return defaults;
+            if (previous.Overlay.BestProgress != null) defaults.Overlay.BestProgress = new Dictionary<string, float>(previous.Overlay.BestProgress);
             if (previous.Overlay.FullAttempts != null)
                 defaults.Overlay.FullAttempts = new Dictionary<string, int>(previous.Overlay.FullAttempts, previous.Overlay.FullAttempts.Comparer);
             if (previous.Overlay.FullProgressAttempts != null)

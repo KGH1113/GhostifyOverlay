@@ -8,9 +8,9 @@
 
 ## 다운로드
 
-**[Windows 설치 파일 받기 · v0.5.1 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.1/GhostifyOverlay-Setup-0.5.1.exe)**
+**[Windows 설치 파일 받기 · v0.5.2 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.2/GhostifyOverlay-Setup-0.5.2.exe)**
 
-[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.1/GhostifyOverlay-0.5.1.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.1/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
+[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.2/GhostifyOverlay-0.5.2.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.2/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
 
 처음 설치하거나 업데이트할 때는 **EXE**를 사용하면 됩니다.
 
@@ -23,14 +23,14 @@
 | 모드 매니저 | Unity Mod Manager 0.32.5 이상 |
 | 실행 환경 | .NET Framework 4.8 |
 
-1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.1.exe`를 다운로드합니다.
+1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.2.exe`를 다운로드합니다.
 2. **게임을 종료한 뒤** EXE를 실행합니다.
 3. 게임 폴더를 확인하고 **설치하기 / 업데이트**를 누릅니다.
 4. 게임을 실행하고 Unity Mod Manager에서 **Ghostify Overlay**를 활성화합니다.
 
 업데이트해도 기존 설정·키 배치·누적 기록은 유지됩니다. 설치 위치는 `Mods/Ghostify Overlay`이며, 이전 `DonQuixoteOverlay` 폴더는 EXE 업데이트 시 자동 이전합니다.
 
-처음 설치하면 **10키 · 검정 배경 · 흰 글자 · 노란 테두리 · 하늘색 고스트 레인**이 적용됩니다.
+처음 설치하면 **손 16키·발 16키 · 검정 배경 · 흰 글자 · 노란 테두리 · 하늘색 고스트 레인**이 적용됩니다.
 
 ## 기본 조작
 
@@ -46,7 +46,7 @@
 
 ## 오버레이 설정
 
-- **표시 항목:** 5개 그룹에서 그룹 전체와 개별 항목을 각각 켜고 끕니다.
+- **표시 항목:** 6개 그룹에서 그룹 전체와 개별 항목을 각각 켜고 끕니다.
 - **행간·색상:** **오버레이 → 공통 스타일**에서 조절합니다. 행간 `0`은 기존 간격입니다.
 - **색상 범위:** 수치·시도 횟수·진행 막대 색상을 변경할 수 있습니다. 글자·곡 정보·타이밍은 흰색으로 고정됩니다.
 - **곡명 / 작곡가:** Ghostify 곡 정보가 표시되면 게임 기본 곡 정보는 숨겨지고, 끄면 원래 상태로 돌아옵니다. ADOFAI Tweaks의 숨김 설정은 유지합니다.
@@ -76,7 +76,7 @@ Pitch는 백분율로 표시하며, FPS는 초당 10회 갱신합니다. 판정 
 | 키·KPS·Total 색상 | **색상**에서 대상 선택 |
 | 레인 색상 | **레인**에서 상단·하단·고스트 레인 설정 |
 | 게임 입력 키 자동 연동 | **입력** · 등록한 손·발 키를 게임의 **특정 키만 입력으로 간주**에 반영 · 고스트 키 제외 |
-| 채터링 차단 | **입력** · `0~500ms`, 기본 **OFF / 100ms** · 플레이 중에만 적용 |
+| 채터링 차단 | **입력** · `0~500ms`, 기본 **ON / 70ms** · 플레이 중에만 적용 |
 
 16키의 **KPS / Total**은 항상 표시됩니다. 기존 KeyboardChatterBlocker가 활성화되어 있으면 내장 채터링 차단은 대기합니다.
 
@@ -98,7 +98,21 @@ Pitch는 백분율로 표시하며, FPS는 초당 10회 갱신합니다. 판정 
 
 **공통 설정으로 유지:** 색상, 레인, 위치, 입력 옵션
 
+## 커스텀 텍스트
+
+**오버레이 → 6 · 커스텀 텍스트**에서 최대 50개의 텍스트를 추가·삭제할 수 있습니다.
+
+1. **텍스트 추가**로 항목을 만듭니다.
+2. **편집할 텍스트 선택**에서 대상을 고릅니다.
+3. 내용(줄바꿈 지원), 표시 여부, HEX·팔레트 색상, 글자 크기, X·Y 위치를 조절합니다.
+
+위치는 1920×1080 기준으로 X가 오른쪽, Y가 아래 방향입니다. 슬라이더 옆 숫자칸에 좌표를 직접 입력할 수도 있습니다. 각 항목은 독립적으로 저장되며 텍스트의 HTML/TMP 태그는 그대로 표시합니다.
+
 ## 시도 횟수와 기록
+
+**최고 진행도(Best)**는 **오버레이 → 5 · 시도 횟수**에서 표시를 켜고 끕니다. 시도 횟수 블록 아래에 반 줄 간격으로 표시되며, 블록과 함께 이동·확대됩니다.
+
+첫 타일부터 시작한 일반 플레이만 집계합니다. 자동플레이·맵 전체 무적·무한 판정 범위를 사용한 플레이와 체크포인트·중간 시작은 제외합니다. 플레이 도중 해당 모드를 켠 경우도 그 시도의 기록을 저장하지 않습니다. 최고 기록은 타일 진행도와 레벨 해시를 기준으로 맵별 저장하며, 맵을 나가거나 외형을 초기화해도 유지됩니다. 이전 기록보다 짧은 시도는 최고 기록을 낮추지 않습니다.
 
 | 표시 | 집계 기준 | 초기화 시점 |
 |---|---|---|

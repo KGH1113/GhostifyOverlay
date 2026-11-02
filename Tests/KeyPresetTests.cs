@@ -34,7 +34,7 @@ public static class KeyPresetTests
     public static string[] Run(string root)
     {
         Results.Clear(); Directory.CreateDirectory(root);
-        var original = new KeyViewerSetting(); original.key10[0] = KeyCode.Return; original.key10Text[0] = "손 이름";
+        var original = new KeyViewerSetting { KeyViewerStyle = KeyviewerStyle.Key10 }; original.key10[0] = KeyCode.Return; original.key10Text[0] = "손 이름";
         original.GhostKey10[0] = (KeyCode)0x1041; original.FootKeyViewerStyle = FootKeyviewerStyle.Key4; original.footkey4Text[1] = "발 이름";
         original.KeyGap = 17; original.XLocation = 99; original.useRain = false; original.SyncNativeInputKeys = false;
         KeyViewerStore.Settings = original; KeyViewerStore.DirectoryPath = root;

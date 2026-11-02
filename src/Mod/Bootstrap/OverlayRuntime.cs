@@ -16,6 +16,7 @@ namespace DonQuixoteOverlay
 
         private void OnDisable()
         {
+            AttemptTracker.FlushBest();
             SceneManager.activeSceneChanged -= SceneChanged;
         }
 
@@ -36,6 +37,7 @@ namespace DonQuixoteOverlay
             try
             {
                 NativeJudgmentColors.RestoreOldScene(current);
+                AttemptTracker.FlushBest();
                 Main.SaveFromUi();
             }
             catch (Exception ex)
@@ -46,6 +48,7 @@ namespace DonQuixoteOverlay
 
         private void OnApplicationQuit()
         {
+            AttemptTracker.FlushBest();
             Main.SaveFromUi();
         }
     }

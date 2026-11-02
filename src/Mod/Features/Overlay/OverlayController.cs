@@ -138,6 +138,7 @@ namespace DonQuixoteOverlay
 
             if (!active)
                 return;
+            RefreshExtraTexts(c != null && c.gameworld && !editing);
             ApplyTypography();
             if (c == null || !c.gameworld)
             {
@@ -177,7 +178,7 @@ namespace DonQuixoteOverlay
             SetActiveIfChanged(_xPerfectAboveMeter.gameObject, showDetailed);
             if (showDetailed)
                 RefreshDetailedPerfectText();
-            bool showAttempts = show.Attempts && PatchRegistry.IsAvailable("statistics");
+            bool showAttempts = (show.Attempts || (s.Group5Enabled && s.ShowBestProgress)) && PatchRegistry.IsAvailable("statistics");
             SetActiveIfChanged(_attempts.gameObject, showAttempts);
             if (showAttempts)
                 RefreshAttemptText();
@@ -188,7 +189,7 @@ namespace DonQuixoteOverlay
             SetScaleIfChanged((RectTransform)_progressFill.parent, Vector3.one * SafeSectionScale(layout.ProgressBarScale));
             SetPositionIfChanged(_status.rectTransform, new Vector2(16f + layout.TopLeftX, -18f + layout.TopLeftY));
             SetPositionIfChanged(_bpm.rectTransform, new Vector2(-16f + layout.TopRightX, -18f + layout.TopRightY));
-            SetPositionIfChanged(_attempts.rectTransform, new Vector2(500f + layout.AttemptsX, 28f + layout.AttemptsY));
+            SetPositionIfChanged(_attempts.rectTransform, new Vector2(500f + layout.AttemptsX, 28f + layout.AttemptsY + (s.Group5Enabled && s.ShowBestProgress ? 40f * SafeSectionScale(layout.AttemptsScale) : 0f)));
             SetPositionIfChanged(_judgmentRoot, new Vector2(layout.JudgmentsX, 13f + layout.JudgmentsY));
             Vector2 meterAnchor = ErrorMeterAnchor(c);
             SetPositionIfChanged(_xPerfectAboveMeter.rectTransform, OverlayPlacement.Detailed(meterAnchor, layout));

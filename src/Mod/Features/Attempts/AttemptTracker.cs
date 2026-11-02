@@ -68,6 +68,7 @@ namespace DonQuixoteOverlay
         {
             if (controller == null || Main.Settings == null)
                 return;
+            FinishBest();
             _pendingController = controller;
             _pendingFloor = startFloor;
             _pendingFrame = Time.frameCount;
@@ -87,6 +88,7 @@ namespace DonQuixoteOverlay
                 BeginRun(controller, floor);
             }
 
+            ObserveBest(controller);
             ObserveContext(controller);
         }
 
@@ -101,6 +103,7 @@ namespace DonQuixoteOverlay
                 RuntimeStatus.Set("attempts.run", "시도 횟수", "레벨 해시 준비 대기 중");
                 return;
             }
+            FinishBest();
             ObserveLevel(key);
             PromoteLegacyRecords();
             _startedMidMap = IsProgressStart(startFloor, controller.startedFromCheckpoint);
@@ -111,6 +114,8 @@ namespace DonQuixoteOverlay
                 return;
             }
 
+            _bestRunActive = !_startedMidMap;
+            _bestRunProgress = 0f;
             if (!_startedMidMap)
             {
                 Increment(SessionAttempts, _levelKey, 1);
@@ -195,9 +200,50 @@ namespace DonQuixoteOverlay
             AdofaiLevelIdentity.Reset();
         }
 
+        internal static float BestProgress
+        {
+            get {
+                if (Main.Settings == null) return 0;
+                float stored; Main.Settings.Overlay.BestProgress.TryGetValue(_levelKey, out stored);
+                return Math.Max(stored, _bestRunActive ? _bestRunProgress : 0);
+            }
+        }
+        private static bool _bestRunActive;
+        private static float _bestRunProgress;
+        private static void ObserveBest(scrController controller)
+        {
+            if (!_bestRunActive) return;
+            if (!controller.gameworld) { FinishBest(); return; }
+            if (!IsEligible(controller)) { _bestRunActive = false; return; }
+            if (controller.stateMachine == null) return;
+            object state = controller.stateMachine.GetState();
+            if (object.Equals(state, States.PlayerControl) || object.Equals(state, States.Fail) || object.Equals(state, States.Fail2) || object.Equals(state, States.Won)) {
+                if (controller.currFloor != null) _bestRunProgress = Math.Max(_bestRunProgress, FloorBest(controller.currFloor.seqID));
+                if (object.Equals(state, States.Won)) _bestRunProgress = 1;
+            }
+            if (object.Equals(state, States.Fail) || object.Equals(state, States.Fail2) || object.Equals(state, States.Won)) FinishBest();
+        }
+        private static float FloorBest(int floor) => OverlayController.FloorProgress(floor);
+        internal static void FlushBest()
+        {
+            var controller = scrController.instance;
+            if (controller != null && controller.gameworld && !IsEligible(controller)) _bestRunActive = false;
+            FinishBest();
+        }
+        private static void FinishBest()
+        {
+            if (!_bestRunActive) return;
+            _bestRunActive = false;
+            if (Main.Settings != null && !string.IsNullOrEmpty(_levelKey)) {
+                var records = Main.Settings.Overlay.BestProgress;
+                float old; records.TryGetValue(_levelKey, out old);
+                if (_bestRunProgress > old) { records[_levelKey] = _bestRunProgress; Main.RequestSave(); }
+            }
+        }
         private static void ClearSession()
         {
             _pendingController = null;
+            FinishBest();
             SessionAttempts.Clear();
             SessionProgressAttempts.Clear();
             _levelKey = string.Empty;
