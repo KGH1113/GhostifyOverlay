@@ -85,6 +85,7 @@ namespace DonQuixoteOverlay {
     internal static class SettingsStore {internal static bool Fail;internal static void Save(DonQuixoteSettings value){if(Fail)throw new IOException("save failed");Main.Saves++;}}
     internal static class SettingsNormalization {internal static float Bounded(float v,float min,float max,float fallback)=>float.IsNaN(v)||float.IsInfinity(v)?fallback:Math.Max(min,Math.Min(max,v));}
     internal static class LayoutStore {internal static LayoutData Current=new LayoutData();internal static bool Fail;internal static int Saves;internal static void Save(){if(Fail)throw new IOException("fixture failure");Saves++;}}
+    internal static class AttemptTracker {internal static string CurrentRecordKey="level:test";internal static string CaptureRecordKey()=>CurrentRecordKey;internal static int ResetCalls;internal static bool LastAttempts;internal static void ResetCurrentMap(string key,bool attempts){if(key!=CurrentRecordKey)throw new InvalidOperationException("changed map");ResetCalls++;LastAttempts=attempts;}}
     internal static class NativeInputSync {internal static int Requests;internal static void Request(){Requests++;}}
     internal static class NativeJudgments {internal static bool Details=true;internal static bool DetailedTextVisible(bool value)=>value&&Details;}
     internal static class ChatterRuntime {internal static bool ExternalActive;internal static void Reset(){}}
@@ -136,10 +137,20 @@ namespace DonQuixoteOverlay {
             Check(Main.Settings.Overlay.ShowAccuracy!=value,"production individual toggle changes its own preference");
             var master=FindButton(w._views[0].Categories[0].Content.transform,"이 그룹 표시");master.Press();master.Press();Check(Main.Settings.Overlay.ShowAccuracy!=value,"group OFF/ON preserves member choices");
             for(int i=0;i<5;i++)foreach(var node in Walk(w._views[0].Categories[i].Content.transform)){
-                var b=node.GetComponent<Button>();if(b==null||b.Label=="이 그룹 표시")continue;var rect=(RectTransform)node;
+                var b=node.GetComponent<Button>();if(b==null||b.Label=="이 그룹 표시"||b.GetComponent<DQToggleVisual>()==null)continue;var rect=(RectTransform)node;
                 float height=(rect.anchorMax.y-rect.anchorMin.y)*156+rect.offsetMax.y-rect.offsetMin.y;
                 Check(Math.Abs(height-44)<.001,"overlay member cards share 44px height: "+b.Label);
             }
+            w.SelectPage(0);w.SelectCategory(w._views[0],4);
+            var resetAttempts=FindButton(w._views[0].Categories[4].Content.transform,"현재 맵 시도 횟수 초기화");
+            var resetBest=FindButton(w._views[0].Categories[4].Content.transform,"현재 맵 최고 진행도 초기화");
+            resetAttempts.Press();Check(w._dialog!=null&&AttemptTracker.ResetCalls==0,"map reset first opens confirmation without changing records");
+            FindButton(w._dialog.transform,"취소").Press();Check(AttemptTracker.ResetCalls==0,"cancelled map reset does not dispatch any deletion");
+            resetAttempts.Press();FindButton(w._dialog.transform,"확인").Press();Check(AttemptTracker.ResetCalls==1&&AttemptTracker.LastAttempts,"attempt button dispatches only the attempt reset");
+            resetBest.Press();FindButton(w._dialog.transform,"확인").Press();Check(AttemptTracker.ResetCalls==2&&!AttemptTracker.LastAttempts,"best button dispatches only the best reset");
+            resetAttempts.Press();AttemptTracker.CurrentRecordKey="level:changed";FindButton(w._dialog.transform,"확인").Press();Check(AttemptTracker.ResetCalls==2,"changed map cannot reuse a reset confirmation");w.CloseDialog();
+            AttemptTracker.CurrentRecordKey=null;foreach(var refresh in w._refresh)refresh();Check(!resetAttempts.interactable&&!resetBest.interactable,"both reset controls disable without a loaded map");
+            AttemptTracker.CurrentRecordKey="level:test";foreach(var refresh in w._refresh)refresh();
             w.SelectPage(0);w.SelectCategory(w._views[0],5);
             Check(w._views[0].Categories[5].Button.Label.Contains("커스텀"),"custom text category is directly below attempts");
             FindButton(w._views[0].Categories[5].Content.transform,"+").Press();

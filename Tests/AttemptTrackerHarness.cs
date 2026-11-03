@@ -37,6 +37,7 @@ namespace DonQuixoteOverlay {
         internal static readonly List<string> Logs=new List<string>();
         internal static int Requests;internal static void RequestSave(){Requests++;}internal static void Save(){Saves++;}internal static void Log(string text){Logs.Add(text);}
     }
+    internal static class SettingsStore {internal static bool Fail;internal static void Save(DonQuixoteSettings settings){if(Fail)throw new System.IO.IOException("fixture write failure");Main.Saves++;}}
     internal static class RuntimeStatus { internal static string Last;internal static int Failures;internal static void Clear(string key){}internal static void Failure(string key,string label,Exception error){Failures++;}internal static void Set(string key,string label,string text){Last=text;} }
     internal static class OverlayController { internal static float FloorProgress(int floor)=>floor/100f; }
     public static partial class AttemptTrackerHarness {
@@ -125,6 +126,32 @@ namespace DonQuixoteOverlay {
             c.stateMachine.State=States.Fail;AttemptTracker.PrepareRun(c,0);Next(c);Next(c);c.stateMachine.State=States.Countdown;Next(c);
             c.stateMachine.State=States.PlayerControl;c.currFloor.seqID=65;Next(c);c.stateMachine.State=States.Fail2;Next(c);
             Check(Math.Abs(AttemptTracker.BestProgress-.65f)<.0001,"second in-game restart can improve and persist the best again");
+            scrController.instance=c;c.gameworld=true;ADOBase.isLevelEditor=false;
+            string resetKey=AttemptTracker.CurrentRecordKey,other="level:v1:unrelated";
+            Main.Settings.Overlay.FullAttempts[resetKey]=5;Main.Settings.Overlay.FullProgressAttempts[resetKey]=6;
+            Main.Settings.Overlay.FullAttempts[other]=77;Main.Settings.Overlay.FullProgressAttempts[other]=88;
+            Main.Settings.Overlay.BestProgress[resetKey]=.65f;Main.Settings.Overlay.BestProgress[other]=.9f;
+            string legacy="path:"+System.IO.Path.GetFullPath(scnGame.instance.levelPath);Main.Settings.Overlay.FullAttempts[legacy]=9;
+            var oldTotals=Main.Settings.Overlay.FullAttempts;int oldSession=AttemptTracker.Attempts;
+            SettingsStore.Fail=true;bool failed=false;try{AttemptTracker.ResetCurrentMap(resetKey,true);}catch(System.IO.IOException){failed=true;}SettingsStore.Fail=false;
+            Check(failed&&object.ReferenceEquals(oldTotals,Main.Settings.Overlay.FullAttempts)&&AttemptTracker.Attempts==oldSession&&Main.Settings.Overlay.FullAttempts[resetKey]==5,"failed reset save preserves both persistent and session attempts");
+            AttemptTracker.ResetCurrentMap(resetKey,true);
+            Check(AttemptTracker.Attempts==0&&AttemptTracker.ProgressAttempts==0&&AttemptTracker.FullAttempts==0&&AttemptTracker.FullProgressAttempts==0,"attempt reset clears all four counters only for the loaded map");
+            Check(Main.Settings.Overlay.FullAttempts[other]==77&&Main.Settings.Overlay.FullProgressAttempts[other]==88&&Math.Abs(AttemptTracker.BestProgress-.65f)<.0001,"attempt reset preserves other maps and this map best progress");
+            Check(!Main.Settings.Overlay.FullAttempts.ContainsKey(legacy),"current map legacy path record cannot reappear after reset");
+            c.stateMachine.State=States.PlayerControl;c.currFloor.seqID=0;AttemptTracker.BeginRun(c,0);AttemptTracker.Tick(c);
+            Check(AttemptTracker.Attempts==1&&AttemptTracker.FullAttempts==1,"the next normal attempt starts counting again from one");
+            c.currFloor.seqID=75;AttemptTracker.Tick(c);int attemptsBeforeBest=AttemptTracker.FullAttempts;
+            SettingsStore.Fail=true;failed=false;try{AttemptTracker.ResetCurrentMap(resetKey,false);}catch(System.IO.IOException){failed=true;}SettingsStore.Fail=false;
+            Check(failed&&Math.Abs(AttemptTracker.BestProgress-.75f)<.0001,"failed best reset preserves the active candidate and stored record");
+            AttemptTracker.ResetCurrentMap(resetKey,false);c.stateMachine.State=States.Fail;AttemptTracker.Tick(c);
+            Check(AttemptTracker.BestProgress==0&&AttemptTracker.FullAttempts==attemptsBeforeBest&&Main.Settings.Overlay.BestProgress[other]==.9f,"best reset preserves attempts and other maps and discards old live candidate");
+            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);c.currFloor.seqID=20;AttemptTracker.Tick(c);c.stateMachine.State=States.Fail;AttemptTracker.Tick(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.2f)<.0001,"a new attempt records a new best normally after reset");
+            float[] oldAngles=ADOBase.lm.floorAngles;ADOBase.lm.floorAngles=new float[]{0,45,270};failed=false;try{AttemptTracker.ResetCurrentMap(resetKey,true);}catch(InvalidOperationException){failed=true;}
+            Check(failed&&Main.Settings.Overlay.FullAttempts[other]==77,"confirmation with a stale map hash cannot reset a different map");
+            ADOBase.lm.floorAngles=oldAngles;c.gameworld=false;failed=false;try{AttemptTracker.ResetCurrentMap(resetKey,false);}catch(InvalidOperationException){failed=true;}
+            Check(failed&&AttemptTracker.CurrentRecordKey==null,"map reset is rejected outside a loaded game or editor map");
             return Results.ToArray();
         }
     }

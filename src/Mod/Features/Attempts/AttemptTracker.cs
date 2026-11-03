@@ -5,7 +5,7 @@ using GhostifyOverlay.Application.Attempts;
 
 namespace DonQuixoteOverlay
 {
-    internal static class AttemptTracker
+    internal static partial class AttemptTracker
     {
         private static string _levelKey = string.Empty;
         private static readonly System.Collections.Generic.Dictionary<string, int> SessionAttempts = new System.Collections.Generic.Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);

@@ -8,9 +8,9 @@
 
 ## 다운로드
 
-**[Windows 설치 파일 받기 · v0.5.3 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.3/GhostifyOverlay-Setup-0.5.3.exe)**
+**[Windows 설치 파일 받기 · v0.5.4 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.4/GhostifyOverlay-Setup-0.5.4.exe)**
 
-[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.3/GhostifyOverlay-0.5.3.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.3/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
+[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.4/GhostifyOverlay-0.5.4.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.4/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
 
 처음 설치하거나 업데이트할 때는 **EXE**를 사용하면 됩니다.
 
@@ -23,7 +23,7 @@
 | 모드 매니저 | Unity Mod Manager 0.32.5 이상 |
 | 실행 환경 | .NET Framework 4.8 |
 
-1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.3.exe`를 다운로드합니다.
+1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.4.exe`를 다운로드합니다.
 2. **게임을 종료한 뒤** EXE를 실행합니다.
 3. 게임 폴더를 확인하고 **설치하기 / 업데이트**를 누릅니다.
 4. 게임을 실행하고 Unity Mod Manager에서 **Ghostify Overlay**를 활성화합니다.
@@ -116,6 +116,15 @@ Pitch는 백분율로 표시하며, FPS는 초당 10회 갱신합니다. 판정 
 **최고 진행도(Best)**는 **오버레이 → 5 · 시도 횟수**에서 표시를 켜고 끕니다. 시도 횟수 블록 아래에 반 줄 간격으로 표시되며, 블록과 함께 이동·확대됩니다.
 
 첫 타일부터 시작한 일반 플레이만 집계합니다. 자동플레이·맵 전체 무적·무한 판정 범위를 사용한 플레이와 체크포인트·중간 시작은 제외합니다. 플레이 도중 해당 모드를 켠 경우도 그 시도의 기록을 저장하지 않습니다. 최고 기록은 타일 진행도와 레벨 해시를 기준으로 맵별 저장하며, 맵을 나가거나 외형을 초기화해도 유지됩니다. 이전 기록보다 짧은 시도는 최고 기록을 낮추지 않습니다.
+
+### 현재 맵 기록 초기화
+
+**오버레이 → 5 · 시도 횟수**에서 각각 따로 초기화할 수 있습니다.
+
+- **현재 맵 시도 횟수 초기화:** 이 맵의 Attempt·Prac Attempt·Full Attempt·Full Prac Attempt를 0으로 초기화합니다. 최고 진행도는 유지합니다.
+- **현재 맵 최고 진행도 초기화:** 이 맵의 Best를 0%로 초기화합니다. 시도 횟수는 유지하며, 현재 진행 중인 시도는 제외하고 다음 시도부터 새로 기록합니다.
+
+두 기능 모두 다른 맵의 기록은 유지합니다. 맵을 불러온 상태에서만 사용할 수 있고, 확인창을 연 뒤 맵이 바뀌면 초기화하지 않습니다.
 
 | 표시 | 집계 기준 | 초기화 시점 |
 |---|---|---|
