@@ -3,7 +3,7 @@ $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
 $fonts=[Drawing.Text.PrivateFontCollection]::new()
 $fonts.AddFontFile((Join-Path (Split-Path $PSScriptRoot) 'Assets/GmarketSansTTFMedium.ttf'))
-foreach($name in @('overlay','keyviewer','colors','presets')){
+foreach($name in @('overlay','keyviewer','colors','presets','custom')){
     $boxes=Get-Content -LiteralPath (Join-Path $InputDirectory ($name+'.json')) -Raw -Encoding UTF8|ConvertFrom-Json
     $bitmap=[Drawing.Bitmap]::new(960,720);$graphics=[Drawing.Graphics]::FromImage($bitmap)
     try{

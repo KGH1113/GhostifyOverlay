@@ -30,7 +30,7 @@ namespace DonQuixoteOverlay
             }
             for (int i = 0; i < items.Count; i++) {
                 var item = items[i]; var text = _customTexts[i];
-                text.gameObject.SetActive(playing && settings.Group6Enabled && item.Enabled);
+                text.gameObject.SetActive(playing && settings.Group6Enabled && item.Enabled && !LayoutEditorController.IsEditingCustom(item));
                 text.text = item.Text; text.color = item.Color; text.fontSize = item.Size;
                 text.lineSpacing = settings.LineSpacing;
                 text.rectTransform.anchoredPosition = new Vector2(item.X, -item.Y);

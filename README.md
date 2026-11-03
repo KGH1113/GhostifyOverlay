@@ -8,9 +8,9 @@
 
 ## 다운로드
 
-**[Windows 설치 파일 받기 · v0.5.2 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.2/GhostifyOverlay-Setup-0.5.2.exe)**
+**[Windows 설치 파일 받기 · v0.5.3 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.3/GhostifyOverlay-Setup-0.5.3.exe)**
 
-[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.2/GhostifyOverlay-0.5.2.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.2/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
+[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.3/GhostifyOverlay-0.5.3.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.3/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
 
 처음 설치하거나 업데이트할 때는 **EXE**를 사용하면 됩니다.
 
@@ -23,7 +23,7 @@
 | 모드 매니저 | Unity Mod Manager 0.32.5 이상 |
 | 실행 환경 | .NET Framework 4.8 |
 
-1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.2.exe`를 다운로드합니다.
+1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.3.exe`를 다운로드합니다.
 2. **게임을 종료한 뒤** EXE를 실행합니다.
 3. 게임 폴더를 확인하고 **설치하기 / 업데이트**를 누릅니다.
 4. 게임을 실행하고 Unity Mod Manager에서 **Ghostify Overlay**를 활성화합니다.
@@ -102,11 +102,14 @@ Pitch는 백분율로 표시하며, FPS는 초당 10회 갱신합니다. 판정 
 
 **오버레이 → 6 · 커스텀 텍스트**에서 최대 50개의 텍스트를 추가·삭제할 수 있습니다.
 
-1. **텍스트 추가**로 항목을 만듭니다.
-2. **편집할 텍스트 선택**에서 대상을 고릅니다.
-3. 내용(줄바꿈 지원), 표시 여부, HEX·팔레트 색상, 글자 크기, X·Y 위치를 조절합니다.
+- **+**로 새 항목을 추가하고, 카드의 입력칸에서 내용을 바로 수정합니다. 줄바꿈도 지원합니다.
+- 왼쪽 토글로 항목을 켜고 끄며, 오른쪽 색상 네모로 팔레트·HEX 색상을 선택합니다.
+- **위치·크기 조절**을 누르면 설정창이 닫히고 실제 화면에 해당 텍스트의 예시가 표시됩니다. 게임 플레이 중이 아니거나 항목 표시가 꺼져 있어도 편집 예시를 볼 수 있습니다.
+- **방향키**로 이동하고 길게 누르면 연속 이동합니다. **Shift**로 빠르게 이동하고 **Ctrl+↑/↓**로 글자 크기를 바꿉니다.
+- **Enter**로 저장하거나 **Esc**로 취소하면 설정창으로 돌아옵니다. 저장 전 편집값은 임시값으로 유지합니다.
+- **×**로 해당 항목을 삭제합니다.
 
-위치는 1920×1080 기준으로 X가 오른쪽, Y가 아래 방향입니다. 슬라이더 옆 숫자칸에 좌표를 직접 입력할 수도 있습니다. 각 항목은 독립적으로 저장되며 텍스트의 HTML/TMP 태그는 그대로 표시합니다.
+각 항목은 독립적으로 저장되며 텍스트의 HTML/TMP 태그는 그대로 표시합니다.
 
 ## 시도 횟수와 기록
 

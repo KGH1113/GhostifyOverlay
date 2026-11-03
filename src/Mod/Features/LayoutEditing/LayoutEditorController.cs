@@ -45,6 +45,35 @@ namespace DonQuixoteOverlay
         private Action _returnToSettings;
         internal static bool IsActive { get; private set; }
         internal int SelectedIndex => _part;
+        private CustomOverlayText _custom, _customDraft;
+        private TMP_Text _customPreview;
+        internal RectTransform CustomPreview => _custom != null ? _customPreview?.rectTransform : null;
+        internal static bool IsEditingCustom(CustomOverlayText item) => IsActive && Main.Root != null && Main.Root.GetComponent<LayoutEditorController>()?._custom == item;
+        internal void BeginCustomFromSettings(CustomOverlayText item, Action returnToSettings)
+        {
+            if (IsActive || item == null) return;
+            Begin(0);
+            _custom = item;
+            _customDraft = new CustomOverlayText { Id = item.Id, Text = item.Text, Color = item.Color, X = item.X, Y = item.Y, Size = item.Size };
+            _returnToSettings = returnToSettings;
+            if (_customPreview == null) {
+                _customPreview = DarkNeonUi.Text("", _hintCanvas.transform, new Vector2(0, 1), new Vector2(0, 1), 28, item.Color, TextAlignmentOptions.TopLeft, false);
+                _customPreview.rectTransform.pivot = new Vector2(0, 1);
+                _customPreview.richText = false; _customPreview.raycastTarget = false;
+                _customPreview.enableAutoSizing = false;
+                _customPreview.overflowMode = TextOverflowModes.Overflow;
+            }
+            _customPreview.gameObject.SetActive(true);
+            _shownPart = -1; RefreshHint(); RefreshCustomPreview();
+        }
+        private void RefreshCustomPreview()
+        {
+            if (_customDraft == null || _customPreview == null) return;
+            _customPreview.text = string.IsNullOrEmpty(_customDraft.Text) ? "텍스트" : _customDraft.Text;
+            _customPreview.color = _customDraft.Color; _customPreview.fontSize = _customDraft.Size;
+            _customPreview.rectTransform.anchoredPosition = new Vector2(_customDraft.X, -_customDraft.Y);
+            _customPreview.rectTransform.sizeDelta = _customPreview.GetPreferredValues(_customPreview.text);
+        }
 
         internal static void CancelActive()
         {
@@ -110,6 +139,13 @@ namespace DonQuixoteOverlay
             {
                 try
                 {
+                    if (_custom != null) {
+                        float oldX = _custom.X, oldY = _custom.Y, oldSize = _custom.Size;
+                        _custom.X = _customDraft.X; _custom.Y = _customDraft.Y; _custom.Size = _customDraft.Size;
+                        try { SettingsStore.Save(Main.Settings); }
+                        catch { _custom.X = oldX; _custom.Y = oldY; _custom.Size = oldSize; throw; }
+                        End(); return;
+                    }
                     LayoutStore.Save();
                     KeyViewerStore.Save();
                     End();
@@ -132,6 +168,7 @@ namespace DonQuixoteOverlay
 
             if (Input.GetKeyDown(KeyCode.Tab))
                 selected = (selected + 1) % Parts.Length;
+            if (_custom != null) selected = _part;
             bool scaling = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
             if (selected != _part || scaling != _scaling)
             {
@@ -155,6 +192,10 @@ namespace DonQuixoteOverlay
             if (x == 0 && y == 0)
                 return;
             float step = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 20f : 5f;
+            if (_custom != null) {
+                _customDraft.X += x * step; _customDraft.Y -= y * step;
+                _customDraft.Normalize(); RefreshCustomPreview(); return;
+            }
             if (_part == 6)
             {
                 var keys = KeyViewerStore.Settings;
@@ -174,6 +215,10 @@ namespace DonQuixoteOverlay
 
         private void Scale(float delta)
         {
+            if (_custom != null) {
+                _customDraft.Size = Mathf.Clamp(_customDraft.Size + delta * 20f, 8, 160);
+                RefreshCustomPreview(); return;
+            }
             if (_part == 6)
             {
                 var keys = KeyViewerStore.Settings;
@@ -191,6 +236,8 @@ namespace DonQuixoteOverlay
         private void End(bool returnToSettings = true)
         {
             IsActive = false;
+            _custom = _customDraft = null;
+            if (_customPreview != null) _customPreview.gameObject.SetActive(false);
             _before = null;
             _horizontal.Reset();
             _vertical.Reset();
@@ -239,6 +286,10 @@ namespace DonQuixoteOverlay
             if (_shownPart == _part || _hint == null)
                 return;
             _shownPart = _part;
+            if (_custom != null) {
+                _hint.text = "커스텀 텍스트 위치·크기 편집\n방향키 이동 (길게 누르면 연속 이동) · Shift 빠르게 · Ctrl+↑↓ 글자 크기\nEnter 저장 · Esc 취소";
+                return;
+            }
             _hint.text = "위치·크기 편집: " + Names[_part] + "\n1 좌상단 · 2 우상단 · 3 시도 횟수 · 4 누적 판정 · 5 콤보 · 6 세부 판정 · 7 키뷰어 · 8 곡 정보 · 9 판정 범위 · 0 진행 막대" + "\nTab 다음 항목 · 방향키 이동 (길게 누르면 연속 이동) · Ctrl+↑↓ 크기 · Shift 빠르게 · Enter 저장 · Esc 취소";
         }
     }

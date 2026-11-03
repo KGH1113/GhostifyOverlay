@@ -6,7 +6,7 @@ namespace UnityEngine {
     public sealed class AudioClip { public string name; }
     public sealed class AudioSource { public AudioClip clip; }
 }
-public enum States { PlayerControl, Fail, Fail2, Won }
+public enum States { PlayerControl, Fail, Fail2, Won, Countdown, WaitingForStart }
 public sealed class FakeState {public States State=States.PlayerControl;public object GetState()=>State;}
 public sealed class FakeFloor {public int seqID;}
 public sealed class scrController {
@@ -113,8 +113,18 @@ namespace DonQuixoteOverlay {
             Check(Math.Abs(AttemptTracker.BestProgress-.42f)<.0001,"autoplay at start cannot set the best even after disabling it");
             c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);c.currFloor.seqID=60;AttemptTracker.Tick(c);ADOBase.isLevelEditor=false;c.gameworld=false;AttemptTracker.Tick(c);c.gameworld=true;
             Check(Math.Abs(AttemptTracker.BestProgress-0f)<.0001 && Main.Settings.Overlay.BestProgress.ContainsValue(.6f),"leaving during a live run commits progress before clearing the current map key");
-            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);c.stateMachine.State=States.Won;AttemptTracker.Tick(c);
+            c.stateMachine.State=States.PlayerControl;AttemptTracker.BeginRun(c,0);AttemptTracker.Tick(c);c.stateMachine.State=States.Won;AttemptTracker.Tick(c);
             Check(AttemptTracker.BestProgress==1,"clearing a full eligible run stores 100 percent");
+            Main.Settings.Overlay.BestProgress.Clear();
+            c.stateMachine.State=States.Won;AttemptTracker.BeginRun(c,0);AttemptTracker.Tick(c);Check(AttemptTracker.BestProgress==0,"stale Won before a new run also cannot create a false completion");
+            c.stateMachine.State=States.Fail;c.currFloor.seqID=90;AttemptTracker.PrepareRun(c,0);Next(c);Next(c);
+            Check(AttemptTracker.BestProgress==0,"stale failure frames after Start_Rewind cannot copy the previous run progress");
+            c.stateMachine.State=States.Countdown;Next(c);Next(c);
+            c.stateMachine.State=States.PlayerControl;c.currFloor.seqID=20;Next(c);c.stateMachine.State=States.Fail;Next(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.2f)<.0001,"first restart survives stale Fail and Countdown until actual gameplay");
+            c.stateMachine.State=States.Fail;AttemptTracker.PrepareRun(c,0);Next(c);Next(c);c.stateMachine.State=States.Countdown;Next(c);
+            c.stateMachine.State=States.PlayerControl;c.currFloor.seqID=65;Next(c);c.stateMachine.State=States.Fail2;Next(c);
+            Check(Math.Abs(AttemptTracker.BestProgress-.65f)<.0001,"second in-game restart can improve and persist the best again");
             return Results.ToArray();
         }
     }

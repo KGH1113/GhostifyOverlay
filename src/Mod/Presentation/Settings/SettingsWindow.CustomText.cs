@@ -1,46 +1,68 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 namespace DonQuixoteOverlay
 {
     public sealed partial class SettingsWindow
     {
-        private string _customTextId;
-        private readonly CustomOverlayText _emptyCustom = new CustomOverlayText { Text = "" };
-        private CustomOverlayText SelectedCustom => Main.Settings.Overlay.CustomTexts.FirstOrDefault(t => t.Id == _customTextId) ?? _emptyCustom;
+        private GameObject _customRows;
+        private readonly List<GameObject> _customCards = new List<GameObject>();
+        private readonly List<Action> _customRefresh = new List<Action>();
         private void BuildCustomTextSettings()
         {
             Heading("6 · 커스텀 텍스트");
             Toggle("커스텀 텍스트 그룹 표시", () => Main.Settings.Overlay.Group6Enabled, v => Main.Settings.Overlay.Group6Enabled = v);
-            Button("텍스트 추가", () => TextDialog("텍스트 추가", "", "화면에 표시할 텍스트를 입력하세요. 최대 50개입니다.", 2048, value => {
-                if (Main.Settings.Overlay.CustomTexts.Count >= 50) throw new ArgumentException("최대 50개까지 추가할 수 있습니다.");
-                var item = new CustomOverlayText { Text = value }; Main.Settings.Overlay.CustomTexts.Add(item); _customTextId = item.Id; Main.RequestSave();
-            }));
-            Button("편집할 텍스트 선택", () => {
-                var items = Main.Settings.Overlay.CustomTexts.ToArray();
-                Choose("텍스트 선택", items.Select((t, i) => (i + 1) + " · " + t.Text.Replace("\n", " ")).ToArray(), i => _customTextId = items[i].Id);
+            _customRows = Row(1);
+            RebuildCustomRows();
+            Button("+", () => {
+                if (Main.Settings.Overlay.CustomTexts.Count >= 50) return;
+                Main.Settings.Overlay.CustomTexts.Add(new CustomOverlayText { Text = "text" });
+                Main.RequestSave(); RebuildCustomRows();
             });
-            LiveHint(() => ReferenceEquals(SelectedCustom, _emptyCustom) ? "텍스트를 추가하거나 목록에서 선택하세요." : "편집 중: " + SelectedCustom.Text);
-            Toggle("선택한 텍스트 표시", () => SelectedCustom.Enabled, v => SelectedCustom.Enabled = v);
-            Label("텍스트 내용 · Enter로 줄바꿈, 입력을 마치면 자동 저장", 44);
-            var input = DarkNeonUi.Input("Custom text", Row(96).transform, Vector2.zero, Vector2.one, "내용", false);
-            input.lineType = TMP_InputField.LineType.MultiLineNewline; input.characterLimit = 2048;
-            input.onEndEdit.AddListener(value => { SelectedCustom.Text = value; Main.RequestSave(); });
-            _refresh.Add(() => { if (!input.isFocused) input.SetTextWithoutNotify(SelectedCustom.Text); });
-            ColorRow("텍스트 색상", () => SelectedCustom.Color, v => SelectedCustom.Color = v);
-            ValueSlider("글자 크기", 8, 160, () => SelectedCustom.Size, v => SelectedCustom.Size = v);
-            ValueSlider("가로 위치 X", -1920, 3840, () => SelectedCustom.X, v => SelectedCustom.X = v);
-            ValueSlider("세로 위치 Y", -1080, 2160, () => SelectedCustom.Y, v => SelectedCustom.Y = v);
-            Label("1920×1080 기준 · X는 오른쪽으로, Y는 아래로 이동합니다. 숫자칸에 직접 입력할 수 있습니다.", 60);
-            Button("선택한 텍스트 삭제", () => {
-                var item = SelectedCustom;
-                if (ReferenceEquals(item, _emptyCustom)) return;
-                Confirm("텍스트 삭제", "선택한 커스텀 텍스트를 삭제할까요?", () => {
-                    Main.Settings.Overlay.CustomTexts.Remove(item); _customTextId = null; Main.RequestSave();
-                    foreach (var refresh in _refresh) refresh();
+        }
+        private void RebuildCustomRows()
+        {
+            ClosePalette();
+            foreach (var refresh in _customRefresh) _refresh.Remove(refresh);
+            _customRefresh.Clear();
+            foreach (var child in _customCards) { child.SetActive(false); Destroy(child); }
+            _customCards.Clear();
+            var items = Main.Settings.Overlay.CustomTexts;
+            float height = Math.Max(1, items.Count * 76);
+            _customRows.GetComponent<LayoutElement>().preferredHeight = height;
+            for (int i = 0; i < items.Count; i++) {
+                var item = items[i];
+                var card = DarkNeonUi.Rect("Custom text row", _customRows.transform, new Vector2(0, 1), Vector2.one);
+                _customCards.Add(card);
+                var rect = (RectTransform)card.transform; rect.pivot = new Vector2(.5f, 1);
+                rect.sizeDelta = new Vector2(0, 66); rect.anchoredPosition = new Vector2(0, -i * 76);
+                DarkNeonUi.ControlSurface(card, DQColors.Card, DQRadii.Control, true);
+                Button toggle = null;
+                toggle = DarkNeonUi.ToggleCard("", card.transform, new Vector2(.015f,.15f), new Vector2(.11f,.85f), item.Enabled, () => {
+                    item.Enabled = !item.Enabled; toggle.GetComponent<DQToggleVisual>().SetValue(item.Enabled); Main.RequestSave();
                 });
-            });
+                var input = DarkNeonUi.Input("Custom text", card.transform, new Vector2(.125f,.13f), new Vector2(.55f,.87f), "text", false);
+                input.lineType = TMP_InputField.LineType.MultiLineNewline; input.characterLimit = 2048; input.SetTextWithoutNotify(item.Text);
+                input.onEndEdit.AddListener(value => { item.Text = value; Main.RequestSave(); });
+                DarkNeonUi.Button("위치·크기 조절", card.transform, new Vector2(.57f,.17f), new Vector2(.83f,.83f), UiButtonKind.Secondary, () => {
+                    ClosePalette(); StopCapture(); SetVisible(false);
+                    Main.Root.GetComponent<LayoutEditorController>().BeginCustomFromSettings(item, () => SetVisible(true));
+                });
+                var swatch = DarkNeonUi.Button("", card.transform, new Vector2(.85f,.23f), new Vector2(.91f,.77f), UiButtonKind.Secondary, () => {
+                    ClosePalette(); StopCapture();
+                    _palette = ColorPalettePanel.Open(_canvas.transform, "텍스트 색상", item.Color, color => {
+                        item.Color = color; Main.RequestSave(); foreach (var refresh in _customRefresh) refresh();
+                    });
+                });
+                swatch.GetComponent<Image>().color = Color.white;
+                Action refreshSwatch = () => { var colors = swatch.colors; colors.normalColor = colors.highlightedColor = colors.pressedColor = item.Color; swatch.colors = colors; };
+                _refresh.Add(refreshSwatch); _customRefresh.Add(refreshSwatch); refreshSwatch();
+                DarkNeonUi.Button("×", card.transform, new Vector2(.93f,.17f), new Vector2(.99f,.83f), UiButtonKind.Secondary, () => {
+                    Confirm("텍스트 삭제", "선택한 텍스트를 삭제할까요?", () => { Main.Settings.Overlay.CustomTexts.Remove(item); Main.RequestSave(); RebuildCustomRows(); });
+                });
+            }
         }
     }
 }

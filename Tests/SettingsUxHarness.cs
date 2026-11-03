@@ -43,7 +43,7 @@ namespace UnityEngine.SceneManagement {public struct Scene{}public static class 
 namespace UnityEngine.EventSystems {public class EventSystem:Component {public static EventSystem current;public bool sendNavigationEvents=true;public void SetSelectedGameObject(object value){}}public class StandaloneInputModule:Component{}}
 namespace UnityEngine.UI {
     public class Signal<T>{private readonly List<Action<T>> _actions=new List<Action<T>>();public void AddListener(Action<T> value){_actions.Add(value);}public void Invoke(T value){foreach(var action in _actions.ToArray())action(value);}}
-    public struct ColorBlock{public Color normalColor,disabledColor,highlightedColor;}
+    public struct ColorBlock{public Color normalColor,disabledColor,highlightedColor,pressedColor;}
     public class Image:Component {public Color color;public bool raycastTarget=true;}
     public class Outline:Component {public Color effectColor;}
     public class GraphicRaycaster:Component{}
@@ -60,7 +60,7 @@ namespace TMPro {
     public enum TextWrappingModes{Normal,NoWrap}
     public enum TextOverflowModes{Overflow,Ellipsis}
     public enum FontStyles{Normal,Bold}
-    public class TMP_Text:Component {public string text="";public float fontSize,fontSizeMax,fontSizeMin;public bool raycastTarget,richText=true,enableAutoSizing;public Color color;public TextAlignmentOptions alignment;public TextWrappingModes textWrappingMode;public TextOverflowModes overflowMode;public FontStyles fontStyle;public RectTransform rectTransform=>transform;public Vector2 GetPreferredValues(string value,float width,float height)=>new Vector2(width,(float)Math.Ceiling((value??"").Length*Math.Max(fontSize,13)*.6/Math.Max(width,1))*Math.Max(fontSize,13)*1.4f);}
+    public class TMP_Text:Component {public string text="";public float fontSize,fontSizeMax,fontSizeMin;public bool raycastTarget,richText=true,enableAutoSizing;public Color color;public TextAlignmentOptions alignment;public TextWrappingModes textWrappingMode;public TextOverflowModes overflowMode;public FontStyles fontStyle;public RectTransform rectTransform=>transform;public Vector2 GetPreferredValues(string value)=>new Vector2((value??"").Length*Math.Max(fontSize,13)*.6f,Math.Max(fontSize,13)*1.4f);public Vector2 GetPreferredValues(string value,float width,float height)=>new Vector2(width,(float)Math.Ceiling((value??"").Length*Math.Max(fontSize,13)*.6/Math.Max(width,1))*Math.Max(fontSize,13)*1.4f);}
     public class TMP_InputField:Component {public enum LineType {SingleLine,MultiLineNewline} public LineType lineType;public bool isFocused,interactable=true;public int characterLimit;public string text="";public TMP_Text textComponent;public readonly Signal<string> onSelect=new Signal<string>(),onEndEdit=new Signal<string>();public void SetTextWithoutNotify(string value){text=value;}public void ActivateInputField(){isFocused=true;}public void Edit(string value){text=value;onEndEdit.Invoke(value);}}
 }
 namespace DonQuixoteOverlay.KeyViewerContents {
@@ -82,6 +82,7 @@ namespace DonQuixoteOverlay.KeyViewerContents {
 }
 namespace DonQuixoteOverlay {
     internal static class Main {internal static DonQuixoteSettings Settings=new DonQuixoteSettings();internal static GameObject Root;internal static int Saves,Requests;internal static void RequestSave(){Requests++;}internal static bool SaveFromUi(){Saves++;return true;}internal static void Log(string text){}}
+    internal static class SettingsStore {internal static bool Fail;internal static void Save(DonQuixoteSettings value){if(Fail)throw new IOException("save failed");Main.Saves++;}}
     internal static class SettingsNormalization {internal static float Bounded(float v,float min,float max,float fallback)=>float.IsNaN(v)||float.IsInfinity(v)?fallback:Math.Max(min,Math.Min(max,v));}
     internal static class LayoutStore {internal static LayoutData Current=new LayoutData();internal static bool Fail;internal static int Saves;internal static void Save(){if(Fail)throw new IOException("fixture failure");Saves++;}}
     internal static class NativeInputSync {internal static int Requests;internal static void Request(){Requests++;}}
@@ -141,14 +142,29 @@ namespace DonQuixoteOverlay {
             }
             w.SelectPage(0);w.SelectCategory(w._views[0],5);
             Check(w._views[0].Categories[5].Button.Label.Contains("커스텀"),"custom text category is directly below attempts");
-            FindButton(w._views[0].Categories[5].Content.transform,"텍스트 추가").Press();
-            var customInput=Walk(w._dialog.transform).Select(t=>t.GetComponent<TMP_InputField>()).First(i=>i!=null);customInput.SetTextWithoutNotify("첫 텍스트");FindButton(w._dialog.transform,"저장 / 적용").Press();
-            Check(Main.Settings.Overlay.CustomTexts.Count==1&&w.SelectedCustom.Text=="첫 텍스트","custom text add dialog selects its new entry");
-            var contentInput=Walk(w._views[0].Categories[5].Content.transform).Select(t=>t.GetComponent<TMP_InputField>()).First(i=>i!=null&&i.characterLimit==2048);contentInput.Edit("literal <b>text</b>\nsecond line");
-            Check(w.SelectedCustom.Text.Contains("\nsecond line")&&contentInput.lineType==TMP_InputField.LineType.MultiLineNewline,"custom text editor preserves multiline literal content");
-            FindButton(w._views[0].Categories[5].Content.transform,"선택한 텍스트 삭제").Press();FindButton(w._dialog.transform,"확인").Press();
-            Check(Main.Settings.Overlay.CustomTexts.Count==0,"custom text deletion removes the selected entry");
-            w.SelectPage(1);w.SelectCategory(w._views[1],0);w._selectedKey=0;w.RefreshKeyEditor();w._keyAlias.Edit("사용자 키 이름");
+            FindButton(w._views[0].Categories[5].Content.transform,"+").Press();
+            Check(Main.Settings.Overlay.CustomTexts.Count==1,"plus button adds one inline custom text card");
+            var custom=Main.Settings.Overlay.CustomTexts[0];
+            var contentInput=Walk(w._customCards[0].transform).Select(t=>t.GetComponent<TMP_InputField>()).First(i=>i!=null);contentInput.Edit("literal <b>text</b>\nsecond line");
+            Check(custom.Text.Contains("\nsecond line")&&contentInput.lineType==TMP_InputField.LineType.MultiLineNewline,"inline editor preserves multiline literal content");
+            w.ExportPreview(Path.Combine(root,"custom.json"));
+            FindButton(w._customCards[0].transform,"위치·크기 조절").Press();
+            Check(!w.Visible&&LayoutEditorController.IsActive&&editor.CustomPreview!=null&&editor.CustomPreview.gameObject.activeSelf,"custom text screen preview exists outside gameplay");
+            float oldX=custom.X,oldSize=custom.Size;
+            Time.frameCount+=2;Input.Held.Add(KeyCode.RightArrow);typeof(LayoutEditorController).GetMethod("Update",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(editor,null);Input.Held.Clear();
+            Check(custom.X==oldX&&editor.CustomPreview.anchoredPosition.x>oldX,"arrow keys edit a preview draft without prematurely saving");
+            Input.Down.Add(KeyCode.Escape);typeof(LayoutEditorController).GetMethod("Update",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(editor,null);Input.Down.Clear();
+            Check(w.Visible&&!LayoutEditorController.IsActive&&custom.X==oldX,"Escape cancels custom placement and returns to settings");
+            w.ExportPreview(Path.Combine(root,"custom.json"));
+            FindButton(w._customCards[0].transform,"위치·크기 조절").Press();Time.frameCount+=2;
+            Input.Held.Add(KeyCode.RightArrow);typeof(LayoutEditorController).GetMethod("Update",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(editor,null);Input.Held.Clear();
+            Input.Held.Add(KeyCode.LeftControl);Input.Held.Add(KeyCode.UpArrow);typeof(LayoutEditorController).GetMethod("Update",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(editor,null);Input.Held.Clear();
+            SettingsStore.Fail=true;Input.Down.Add(KeyCode.Return);typeof(LayoutEditorController).GetMethod("Update",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(editor,null);
+            Check(LayoutEditorController.IsActive&&custom.X==oldX&&custom.Size==oldSize,"failed custom save restores source values and keeps preview open");
+            SettingsStore.Fail=false;typeof(LayoutEditorController).GetMethod("Update",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(editor,null);Input.Down.Clear();
+            Check(w.Visible&&!LayoutEditorController.IsActive&&custom.X>oldX&&custom.Size>oldSize,"Enter commits custom position and keyboard size editing");
+            FindButton(w._customCards[0].transform,"×").Press();FindButton(w._dialog.transform,"확인").Press();
+            Check(Main.Settings.Overlay.CustomTexts.Count==0&&w._customCards.Count==0,"inline delete removes only its custom text card");            w.SelectPage(1);w.SelectCategory(w._views[1],0);w._selectedKey=0;w.RefreshKeyEditor();w._keyAlias.Edit("사용자 키 이름");
             Check(KeyViewerStore.Settings.key10Text[0]=="사용자 키 이름","production key inspector writes display alias");
             w.SavePresetAs();var nameInput=Walk(w._dialog.transform).Select(t=>t.GetComponent<TMP_InputField>()).First(i=>i!=null);nameInput.SetTextWithoutNotify("내 프리셋");FindButton(w._dialog.transform,"저장 / 적용").Press();
             string id=w._selectedPresetId;Check(KeyPresetStore.Service.Find(id).Name=="내 프리셋"&&KeyPresetStore.Service.Find(id).Data.HandNames[0]=="사용자 키 이름","production save dialog persists preset and key names together");

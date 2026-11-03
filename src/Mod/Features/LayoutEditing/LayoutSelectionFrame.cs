@@ -25,7 +25,8 @@ namespace DonQuixoteOverlay
                 }
                 found = true;
             };
-            if (Owner.SelectedIndex == 6) {
+            if (Owner.CustomPreview != null) include(Owner.CustomPreview);
+            else if (Owner.SelectedIndex == 6) {
                 var viewer = KeyViewer.Instance;
                 if (viewer?.Keys != null) foreach (var key in viewer.Keys) if (key != null) include(key.GameObject.GetComponent<RectTransform>());
                 if (viewer?.Kps != null) include(viewer.Kps.GameObject.GetComponent<RectTransform>());

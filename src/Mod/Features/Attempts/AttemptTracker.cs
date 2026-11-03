@@ -116,6 +116,7 @@ namespace DonQuixoteOverlay
 
             _bestRunActive = !_startedMidMap;
             _bestRunProgress = 0f;
+            _bestRunArmed = false;
             if (!_startedMidMap)
             {
                 Increment(SessionAttempts, _levelKey, 1);
@@ -208,7 +209,7 @@ namespace DonQuixoteOverlay
                 return Math.Max(stored, _bestRunActive ? _bestRunProgress : 0);
             }
         }
-        private static bool _bestRunActive;
+        private static bool _bestRunActive, _bestRunArmed;
         private static float _bestRunProgress;
         private static void ObserveBest(scrController controller)
         {
@@ -217,6 +218,12 @@ namespace DonQuixoteOverlay
             if (!IsEligible(controller)) { _bestRunActive = false; return; }
             if (controller.stateMachine == null) return;
             object state = controller.stateMachine.GetState();
+            // Start_Rewind schedules music asynchronously; the previous Fail state
+            // can remain visible until OnMusicScheduled enters Countdown/PlayerControl.
+            if (!_bestRunArmed) {
+                if (!object.Equals(state, States.PlayerControl)) return;
+                _bestRunArmed = true;
+            }
             if (object.Equals(state, States.PlayerControl) || object.Equals(state, States.Fail) || object.Equals(state, States.Fail2) || object.Equals(state, States.Won)) {
                 if (controller.currFloor != null) _bestRunProgress = Math.Max(_bestRunProgress, FloorBest(controller.currFloor.seqID));
                 if (object.Equals(state, States.Won)) _bestRunProgress = 1;
