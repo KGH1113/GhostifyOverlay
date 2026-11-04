@@ -130,9 +130,21 @@ public static class FeatureIntegrationTests {
             scrController.instance.stateMachine.State=States.PlayerControl;DonQuixoteOverlay.ChatterRuntime.Tick();before=hook.Delivered;hook.HookCallback(press);Check(r,hook.Delivered==before+1,"new run state accepts the first press without old timestamps");
             scrController.instance.paused=true;DonQuixoteOverlay.ChatterRuntime.Tick();before=hook.Delivered;hook.HookCallback(press);Check(r,hook.Delivered==before+1,"paused gameplay does not filter menu input");scrController.instance.paused=false;
             UnityEngine.Application.isFocused=false;DonQuixoteOverlay.ChatterRuntime.Tick();before=hook.Delivered;hook.HookCallback(press);Check(r,hook.Delivered==before+1,"focus loss suspends integrated filtering");UnityEngine.Application.isFocused=true;
+            DonQuixoteOverlay.ChatterRuntime.Reset();DonQuixoteOverlay.ChatterRuntime.Tick();
+            Check(r,DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press)&&!DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press),"live async chatter filtering rejects a rapid repeated press before rendering");
+            bool firstSync=DonQuixoteOverlay.ChatterRuntime.AcceptSync(UnityEngine.KeyCode.A);UnityEngine.Time.frameCount++;
+            Check(r,firstSync&&!DonQuixoteOverlay.ChatterRuntime.AcceptSync(UnityEngine.KeyCode.A),"live sync chatter filtering rejects a rapid next-frame press before rendering");
+            DonQuixoteOverlay.ChatterRuntime.RenderSuspended=true;
+            Check(r,DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press)&&DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press)&&DonQuixoteOverlay.ChatterRuntime.AcceptSync(UnityEngine.KeyCode.A),"render suspension immediately bypasses both filters before the next runtime tick");
+            DonQuixoteOverlay.ChatterRuntime.Tick();DonQuixoteOverlay.ChatterRuntime.Tick();UnityEngine.Time.frameCount++;
+            Check(r,DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press)&&DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press)&&DonQuixoteOverlay.ChatterRuntime.AcceptSync(UnityEngine.KeyCode.A),"ordinary frame ticks cannot reactivate chatter filtering during recorded rendering");
+            DonQuixoteOverlay.ChatterRuntime.RenderSuspended=false;DonQuixoteOverlay.ChatterRuntime.Reset();DonQuixoteOverlay.ChatterRuntime.Tick();
+            Check(r,DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press)&&!DonQuixoteOverlay.ChatterRuntime.AcceptAsync(press),"render cleanup restores live async filtering with a fresh first press");
+            firstSync=DonQuixoteOverlay.ChatterRuntime.AcceptSync(UnityEngine.KeyCode.A);UnityEngine.Time.frameCount++;
+            Check(r,firstSync&&!DonQuixoteOverlay.ChatterRuntime.AcceptSync(UnityEngine.KeyCode.A),"render cleanup restores live sync filtering without retaining the render timeline");
             foreign.Patch(AccessTools.Method(typeof(SkyHook.SkyHookManager),"HookCallback"),new HarmonyMethod(typeof(FeatureIntegrationTests),"Reject"));before=hook.Delivered;int raw=DonQuixoteOverlay.KeyViewerContents.KeyViewer.Instance.Raw;hook.HookCallback(press);
             Check(r,hook.Delivered==before&&DonQuixoteOverlay.KeyViewerContents.KeyViewer.Instance.Raw==raw+1,"foreign rejecting prefixes still preserve the raw ghost stream");
-        }finally{harmony.UnpatchAll(harmony.Id);foreign.UnpatchAll(foreign.Id);}
+        }finally{DonQuixoteOverlay.ChatterRuntime.RenderSuspended=false;DonQuixoteOverlay.ChatterRuntime.Reset();harmony.UnpatchAll(harmony.Id);foreign.UnpatchAll(foreign.Id);}
         var title=new GhostifyOverlay.Integration.Unity.NativeSongTitleVisibility();var late=title.GetType().GetMethod("LateUpdate",All);var stop=title.GetType().GetMethod("OnDisable",All);var obj=scrUIController.instance.txtLevelName.gameObject;
         DonQuixoteOverlay.OverlayController.Instance.SongInfoVisible=true;late.Invoke(title,null);late.Invoke(title,null);Check(r,!obj.activeSelf&&obj.Writes==1,"production title adapter hides exactly the game's song object without repeated writes");
         DonQuixoteOverlay.OverlayController.Instance.SongInfoVisible=false;late.Invoke(title,null);Check(r,obj.activeSelf,"production title adapter restores the native title when overlay is OFF");

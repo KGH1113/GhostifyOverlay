@@ -15,6 +15,7 @@ namespace DonQuixoteOverlay
 
         private static int _combo;
         private Canvas _canvas;
+        internal Canvas CaptureCanvas => _canvas;
         private RectTransform _contentRoot;
         private RectTransform _progressFill;
         private TextMeshProUGUI _status;

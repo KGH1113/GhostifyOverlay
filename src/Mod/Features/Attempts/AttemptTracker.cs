@@ -14,6 +14,48 @@ namespace DonQuixoteOverlay
         private static float _startProgress;
         private static scrController _pendingController;
         private static int _pendingFloor, _pendingFrame;
+        private static RenderContext _renderContext;
+
+        // Rendering may load another level and trigger all the ordinary run/scene
+        // callbacks. Keep its display context separate from live session history.
+        internal static void BeginRenderSession()
+        {
+            if (_renderContext != null) return;
+            FlushBest();
+            _renderContext = new RenderContext(_levelKey, _startedMidMap, _startProgress);
+            DiscardRun();
+        }
+
+        internal static void EndRenderSession()
+        {
+            if (_renderContext == null) return;
+            DiscardRun();
+            _levelKey = _renderContext.LevelKey;
+            _startedMidMap = _renderContext.StartedMidMap;
+            _startProgress = _renderContext.StartProgress;
+            _renderContext = null;
+            AdofaiLevelIdentity.Reset();
+        }
+
+        private static void DiscardRun()
+        {
+            _pendingController = null;
+            _bestRunActive = _bestRunArmed = false;
+            _bestRunProgress = 0f;
+        }
+
+        private sealed class RenderContext
+        {
+            internal readonly string LevelKey;
+            internal readonly bool StartedMidMap;
+            internal readonly float StartProgress;
+            internal RenderContext(string levelKey, bool startedMidMap, float startProgress)
+            {
+                LevelKey = levelKey;
+                StartedMidMap = startedMidMap;
+                StartProgress = startProgress;
+            }
+        }
         public static int Attempts
         {
             get
@@ -105,9 +147,11 @@ namespace DonQuixoteOverlay
             }
             FinishBest();
             ObserveLevel(key);
-            PromoteLegacyRecords();
             _startedMidMap = IsProgressStart(startFloor, controller.startedFromCheckpoint);
             _startProgress = _startedMidMap ? OverlayController.FloorProgress(startFloor) : 0f;
+            if (_renderContext != null)
+                return;
+            PromoteLegacyRecords();
             if (!IsEligible(controller))
             {
                 ReportRun(EligibilityReason(controller));
@@ -213,6 +257,7 @@ namespace DonQuixoteOverlay
         private static float _bestRunProgress;
         private static void ObserveBest(scrController controller)
         {
+            if (_renderContext != null) return;
             if (!_bestRunActive) return;
             if (!controller.gameworld) { FinishBest(); return; }
             if (!IsEligible(controller)) { _bestRunActive = false; return; }
@@ -233,12 +278,14 @@ namespace DonQuixoteOverlay
         private static float FloorBest(int floor) => OverlayController.FloorProgress(floor);
         internal static void FlushBest()
         {
+            if (_renderContext != null) return;
             var controller = scrController.instance;
             if (controller != null && controller.gameworld && !IsEligible(controller)) _bestRunActive = false;
             FinishBest();
         }
         private static void FinishBest()
         {
+            if (_renderContext != null) return;
             if (!_bestRunActive) return;
             _bestRunActive = false;
             if (Main.Settings != null && !string.IsNullOrEmpty(_levelKey)) {
@@ -251,8 +298,11 @@ namespace DonQuixoteOverlay
         {
             _pendingController = null;
             FinishBest();
-            SessionAttempts.Clear();
-            SessionProgressAttempts.Clear();
+            if (_renderContext == null)
+            {
+                SessionAttempts.Clear();
+                SessionProgressAttempts.Clear();
+            }
             _levelKey = string.Empty;
             _startedMidMap = false;
             _startProgress = 0f;

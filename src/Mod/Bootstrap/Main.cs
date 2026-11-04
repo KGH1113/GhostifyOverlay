@@ -32,6 +32,8 @@ namespace DonQuixoteOverlay
         private static void Update(UnityModManager.ModEntry entry, float delta)
         {
             if (!Enabled) return;
+            GhostifyOverlay.Integration.OrbitRender.OrbitRenderBridge.Tick();
+            if (GhostifyOverlay.Integration.OrbitRender.OrbitRenderBridge.IsRendering) return;
             NativeInputSync.Tick();
             Saves.Tick(Time.unscaledTime, LayoutEditorController.IsActive);
             bool alt = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.AltGr);

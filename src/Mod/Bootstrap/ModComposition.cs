@@ -9,12 +9,15 @@ namespace DonQuixoteOverlay
     internal static class ModComposition
     {
         internal static ModLifecycle CreateLifecycle() => new ModLifecycle(new UnityModRuntime(), new HarmonyPatchService(),
-            error => Main.Log(error.ToString()), enabled => Main.Enabled = enabled);
+            error => Main.Log(error.ToString()), enabled => {
+                Main.Enabled = enabled;
+                if (enabled) GhostifyOverlay.Integration.OrbitRender.OrbitRenderBridge.Tick();
+            });
         internal static SaveCoordinator CreateSaveCoordinator() => new SaveCoordinator(new ISaveParticipant[] {
             new DelegateSaveParticipant(() => SettingsStore.Save(Main.Settings)),
             new DelegateSaveParticipant(LayoutStore.Save),
             new DelegateSaveParticipant(KeyViewerStore.Save),
-            new DelegateSaveParticipant(() => KeyCountData.Instance.Flush(KeyViewer.CurrentTicks, true)),
+            new DelegateSaveParticipant(() => KeyCountData.Instance.Flush(KeyViewer.Stopwatch.Elapsed.Ticks, true)),
             new DelegateSaveParticipant(() => RuntimeStatus.Clear("settings.pending"))
         }, LayoutEditorController.CancelActive, error => Main.Log(error.ToString()));
     }

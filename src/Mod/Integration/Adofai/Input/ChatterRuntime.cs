@@ -20,6 +20,7 @@ namespace DonQuixoteOverlay
         private static Configuration _configuration = new Configuration(false, false, 0);
         private static float _nextExternalCheck;
         internal static bool ExternalActive { get; private set; }
+        internal static volatile bool RenderSuspended;
         internal static void Tick()
         {
             if (Time.unscaledTime >= _nextExternalCheck)
@@ -29,7 +30,7 @@ namespace DonQuixoteOverlay
             }
             ChatterSettings settings = Main.Settings.Chatter;
             scrController controller = scrController.instance;
-            bool active = Main.Enabled && settings.Enabled && !ExternalActive && PatchRegistry.IsAvailable("chatter") && Application.isFocused &&
+            bool active = !RenderSuspended && Main.Enabled && settings.Enabled && !ExternalActive && PatchRegistry.IsAvailable("chatter") && Application.isFocused &&
                 !MenuInputBlock.IsActive && controller != null && controller.gameworld && !controller.paused &&
                 controller.stateMachine != null && object.Equals(controller.stateMachine.GetState(), States.PlayerControl);
             bool async = active && AsyncInputManager.isActive;
@@ -42,14 +43,14 @@ namespace DonQuixoteOverlay
         internal static bool AcceptAsync(SkyHookEvent value)
         {
             Configuration configuration = Volatile.Read(ref _configuration);
-            if (!configuration.Active || !configuration.Async || value.Type != SkyHook.EventType.KeyPressed || value.Key == 27) return true;
+            if (RenderSuspended || !configuration.Active || !configuration.Async || value.Type != SkyHook.EventType.KeyPressed || value.Key == 27) return true;
             bool accepted = configuration.AsyncFilter.Accept(value.Key, Stopwatch.GetTimestamp(), configuration.Interval);
             return accepted || !object.ReferenceEquals(configuration, Volatile.Read(ref _configuration));
         }
         internal static bool AcceptSync(KeyCode key)
         {
             Configuration configuration = Volatile.Read(ref _configuration);
-            if (!configuration.Active || key == KeyCode.Escape) return true;
+            if (RenderSuspended || !configuration.Active || key == KeyCode.Escape) return true;
             return configuration.SyncFilter.AcceptFrame((int)key, Stopwatch.GetTimestamp(), configuration.Interval, Time.frameCount);
         }
         internal static void Reset()
