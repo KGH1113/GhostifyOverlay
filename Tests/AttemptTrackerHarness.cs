@@ -44,7 +44,7 @@ namespace DonQuixoteOverlay {
         private static readonly List<string> Results=new List<string>();
         private static void Check(bool condition,string text){if(!condition)throw new Exception("FAIL "+text);Results.Add("PASS "+text);}
         private static void Next(scrController controller){UnityEngine.Time.frameCount++;AttemptTracker.Tick(controller);}
-        private static void Fresh(){AttemptTracker.EndSession();Main.Settings=new DonQuixoteSettings();Main.Saves=0;Main.Requests=0;Main.Logs.Clear();RDC.auto=false;ADOBase.isLevelEditor=true;ADOBase.isOfficialLevel=false;ADOBase.currentLevel=null;ADOBase.lm=new scrLevelMaker();UnityEngine.Time.frameCount=0;scnGame.instance=new scnGame();RuntimeStatus.Failures=0;}
+        private static void Fresh(){AttemptTracker.EndRenderSession();AttemptTracker.EndSession();Main.Settings=new DonQuixoteSettings();Main.Saves=0;Main.Requests=0;Main.Logs.Clear();RDC.auto=false;ADOBase.isLevelEditor=true;ADOBase.isOfficialLevel=false;ADOBase.currentLevel=null;ADOBase.lm=new scrLevelMaker();UnityEngine.Time.frameCount=0;scnGame.instance=new scnGame();RuntimeStatus.Failures=0;}
         public static string[] Run(){
             Results.Clear();Fresh();var c=new scrController{freeroamInvulnerability=true};
             AttemptTracker.PrepareRun(c,0);AttemptTracker.Tick(c);
@@ -152,7 +152,99 @@ namespace DonQuixoteOverlay {
             Check(failed&&Main.Settings.Overlay.FullAttempts[other]==77,"confirmation with a stale map hash cannot reset a different map");
             ADOBase.lm.floorAngles=oldAngles;c.gameworld=false;failed=false;try{AttemptTracker.ResetCurrentMap(resetKey,false);}catch(InvalidOperationException){failed=true;}
             Check(failed&&AttemptTracker.CurrentRecordKey==null,"map reset is rejected outside a loaded game or editor map");
+            RenderProtectionTests();
             return Results.ToArray();
+        }
+
+        private static void RenderProtectionTests()
+        {
+            Fresh();
+            var controller = new scrController();
+            scrController.instance = controller;
+            AttemptTracker.BeginRun(controller, 0);
+            controller.currFloor.seqID = 37;
+            AttemptTracker.Tick(controller);
+            string liveKey = AdofaiLevelIdentity.Current(false);
+            float[] liveAngles = ADOBase.lm.floorAngles;
+            string livePath = scnGame.instance.levelPath;
+
+            AttemptTracker.BeginRenderSession();
+            Check(Main.Settings.Overlay.BestProgress[liveKey] == .37f,
+                "render entry preserves the already-observed legitimate live best");
+            int saves = Main.Saves, requests = Main.Requests;
+
+            // The render loads another map and fires ordinary restart, tick and
+            // scene callbacks. Its HUD may read that map's existing records.
+            ADOBase.lm.floorAngles = new float[] { 0, 45, 270 };
+            scnGame.instance.levelPath = "render-target.adofai";
+            string renderKey = AdofaiLevelIdentity.Current(true);
+            Main.Settings.Overlay.FullAttempts[renderKey] = 7;
+            Main.Settings.Overlay.FullProgressAttempts[renderKey] = 9;
+            Main.Settings.Overlay.BestProgress[renderKey] = .6f;
+            AttemptTracker.PrepareRun(controller, 0);
+            Next(controller);
+            Check(AttemptTracker.Attempts == 0 && AttemptTracker.FullAttempts == 7 && AttemptTracker.BestProgress == .6f,
+                "render HUD reads the target map without counting a full-start attempt");
+            AttemptTracker.BeginRenderSession();
+            controller.currFloor.seqID = 100;
+            controller.stateMachine.State = States.Won;
+            Next(controller);
+            AttemptTracker.FlushBest();
+            AttemptTracker.EndSession();
+            controller.startedFromCheckpoint = true;
+            AttemptTracker.PrepareRun(controller, 22);
+            Next(controller);
+            Check(AttemptTracker.ProgressAttempts == 0 && AttemptTracker.FullProgressAttempts == 9 && AttemptTracker.StartedMidMap,
+                "rendered checkpoint starts update presentation without changing practice records");
+            bool rejected = false;
+            try { AttemptTracker.ResetCurrentMap(renderKey, true); }
+            catch (InvalidOperationException) { rejected = true; }
+            Check(rejected && AttemptTracker.CurrentRecordKey == null,
+                "record reset cannot change the temporarily loaded render map");
+            Check(Main.Saves == saves && Main.Requests == requests &&
+                Main.Settings.Overlay.FullAttempts[liveKey] == 1 &&
+                Main.Settings.Overlay.FullAttempts[renderKey] == 7 &&
+                Main.Settings.Overlay.FullProgressAttempts[renderKey] == 9 &&
+                Main.Settings.Overlay.BestProgress[renderKey] == .6f,
+                "render run, completion, scene cleanup and flush leave persistent records unchanged");
+
+            // OrbitRender restores the game before its end callback.
+            ADOBase.lm.floorAngles = liveAngles;
+            scnGame.instance.levelPath = livePath;
+            controller.startedFromCheckpoint = false;
+            AttemptTracker.EndRenderSession();
+            AttemptTracker.EndRenderSession();
+            Check(AttemptTracker.Attempts == 1 && AttemptTracker.FullAttempts == 1 &&
+                AttemptTracker.BestProgress == .37f && !AttemptTracker.StartedMidMap,
+                "render end restores live session context even after duplicate begin/end callbacks");
+            Next(controller);
+            AttemptTracker.FlushBest();
+            Check(Main.Settings.Overlay.BestProgress[liveKey] == .37f && Main.Requests == requests,
+                "stale render completion cannot become a live best after render end");
+            controller.stateMachine.State = States.PlayerControl;
+            controller.currFloor.seqID = 52;
+            AttemptTracker.BeginRun(controller, 0);
+            Next(controller);
+            controller.stateMachine.State = States.Fail;
+            Next(controller);
+            Check(AttemptTracker.Attempts == 2 && AttemptTracker.FullAttempts == 2 && AttemptTracker.BestProgress == .52f,
+                "the next real play counts and records its best normally");
+
+            Fresh();
+            controller = new scrController();
+            scrController.instance = controller;
+            AttemptTracker.PrepareRun(controller, 0);
+            AttemptTracker.BeginRenderSession();
+            AttemptTracker.EndRenderSession();
+            Next(controller);
+            Check(AttemptTracker.Attempts == 0 && Main.Saves == 0,
+                "render entry discards an unfinished pre-render run callback");
+            AttemptTracker.BeginRenderSession();
+            AttemptTracker.PrepareRun(controller, 0);
+            AttemptTracker.EndRenderSession();
+            Next(controller);
+            Check(AttemptTracker.Attempts == 0 && Main.Saves == 0 && Main.Requests == 0,
+                "render cancellation discards queued render callbacks before live ticks resume");
         }
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using GhostifyOverlay.Integration.OrbitRender;
 using SkyHook;
 using UnityEngine;
 
@@ -83,6 +84,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
 
         private void StartEventListener()
         {
+            if (_listening || OrbitRenderBridge.IsReplayActive) return;
             _physicalHeld.Clear();
             _labelHeld.Clear();
             Interlocked.Increment(ref _generation);
@@ -96,6 +98,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
 
         private void StopEventListener()
         {
+            if (!_listening) return;
             _listening = false;
             _rawGhostInput = false;
             Interlocked.Increment(ref _generation);
@@ -173,7 +176,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
                 Keys[i].UpdateRequestKey(false);
             }
 
-            if (!resynchronize)
+            if (!resynchronize || OrbitRenderBridge.IsReplayActive)
                 return;
             Sync(GetKeyCode(), 0);
             Sync(GetFootKeyCode(), HandOutIndex);
@@ -202,7 +205,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
 
         internal void BeginGameplayRun()
         {
-            if (!_built)
+            if (!_built || OrbitRenderBridge.IsReplayActive)
                 return;
             Interlocked.Increment(ref _generation);
             ResetTransient(false);
@@ -259,6 +262,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
 
         private void PumpInput()
         {
+            if (OrbitRenderBridge.IsReplayActive) return;
             bool hook = AsyncInputHook.IsRunning;
             if (hook != _hookWasActive)
             {
@@ -335,7 +339,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
             if (_keyBinding.NativeMap.TryGetValue(native, out indexes))
                 counted |= Work(indexes, pressed, ticks, ghostOnly, skipGhost);
             if (counted)
-                KeyCountData.Instance.Save();
+                CurrentCounts.Save();
         }
 
         private void WorkUnity(KeyCode code, bool pressed, long ticks)
@@ -396,7 +400,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
                 return false;
             }
 
-            KeyCountData.Instance.Record(CountIndex(index, Settings.KeyViewerStyle));
+            CurrentCounts.Record(CountIndex(index, Settings.KeyViewerStyle));
             _pressTimes.Enqueue(ticks);
             if (index < HandOutIndex && Settings.useRain)
                 BeginRain(key, ticks, false);
@@ -412,7 +416,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
                 Kps.Value.text = kps.ToString();
             }
 
-            long total = KeyCountData.Instance.TotalCount;
+            long total = CurrentCounts.TotalCount;
             if (Total != null && total != _lastTotalCount)
             {
                 _lastTotalCount = total;
@@ -422,7 +426,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
             for (int i = 0; i < HandOutIndex; i++)
                 if (Keys[i]?.Value != null)
                 {
-                    long value = KeyCountData.Instance.Count[CountIndex(i, Settings.KeyViewerStyle)];
+                    long value = CurrentCounts.Count[CountIndex(i, Settings.KeyViewerStyle)];
                     if (value == _shownCounts[i])
                         continue;
                     _shownCounts[i] = value;

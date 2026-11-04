@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using GhostifyOverlay.Integration.OrbitRender;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -24,7 +25,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
         public Key[] Keys;
         public Key Kps, Total;
         public static Stopwatch Stopwatch = Stopwatch.StartNew();
-        public static long CurrentTicks => Stopwatch.Elapsed.Ticks;
+        public static long CurrentTicks => OrbitRenderBridge.TryGetReplayTicks(out long ticks) ? ticks : Stopwatch.Elapsed.Ticks;
 
         private bool _built, _visible, _focused = true;
         private float _builtY;
@@ -63,10 +64,13 @@ namespace DonQuixoteOverlay.KeyViewerContents
         private void OnApplicationFocus(bool focus)
         {
             _focused = focus;
-            ResetTransient(true);
+            if (!OrbitRenderBridge.IsReplayActive) ResetTransient(true);
         }
 
-        private void SceneChanged(Scene previous, Scene current) => ResetTransient(true);
+        private void SceneChanged(Scene previous, Scene current)
+        {
+            if (!OrbitRenderBridge.IsReplayActive) ResetTransient(true);
+        }
         internal void Rebuild()
         {
             Shutdown();
@@ -113,10 +117,11 @@ namespace DonQuixoteOverlay.KeyViewerContents
             Updater.enabled = false;
             _pressTimes = new();
             RebuildKeyBinding();
-            StartEventListener();
+            if (!OrbitRenderBridge.IsReplayActive) StartEventListener();
             _built = true;
             _visible = true;
             ResetTransient(true);
+            if (OrbitRenderBridge.IsReplayActive) SetReplayInput(true);
             RefreshColors();
             RuntimeStatus.Set("keyviewer", "키뷰어", "활성");
         }
@@ -126,7 +131,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
             StopEventListener();
             if (RainManager != null)
                 RainManager.Clear();
-            KeyCountData.Instance.Flush(CurrentTicks, true);
+            KeyCountData.Instance.Flush(Stopwatch.Elapsed.Ticks, true);
             if (KeyViewerObject != null)
             {
                 KeyViewerObject.SetActive(false);
@@ -152,6 +157,11 @@ namespace DonQuixoteOverlay.KeyViewerContents
         {
             if (!_built)
                 return;
+            if (OrbitRenderBridge.IsReplayActive)
+            {
+                RefreshReplayFrame();
+                return;
+            }
             var controller = scrController.instance;
             bool editor = ADOBase.isLevelEditor && scnEditor.instance != null;
             bool gameplay = controller != null && KeyViewerVisibility.IsPlaying(controller.gameworld, editor, editor && scnEditor.instance.playMode);
@@ -181,7 +191,7 @@ namespace DonQuixoteOverlay.KeyViewerContents
                 Updater.Tick();
             }
 
-            KeyCountData.Instance.Flush(CurrentTicks);
+            KeyCountData.Instance.Flush(Stopwatch.Elapsed.Ticks);
         }
 
         internal void RefreshColors()
@@ -378,14 +388,14 @@ namespace DonQuixoteOverlay.KeyViewerContents
             if (i == -2)
             {
                 key.Text.text = "Total";
-                key.Value.text = KeyCountData.Instance.TotalCount.ToString();
+                key.Value.text = (Instance?.CurrentCounts ?? KeyCountData.Instance).TotalCount.ToString();
                 return;
             }
 
             if (i < HandOutIndex)
             {
                 key.Text.text = GetKeyText()[i] ?? KeyToString(GetKeyCode()[i]);
-                key.Value.text = KeyCountData.Instance.Count[CountIndex(i, Settings.KeyViewerStyle)].ToString();
+                key.Value.text = (Instance?.CurrentCounts ?? KeyCountData.Instance).Count[CountIndex(i, Settings.KeyViewerStyle)].ToString();
             }
             else
                 key.Text.text = GetFootKeyText()[i - HandOutIndex] ?? KeyToString(GetFootKeyCode()[i - HandOutIndex]);
