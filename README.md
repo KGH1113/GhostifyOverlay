@@ -8,9 +8,9 @@
 
 ## 다운로드
 
-**[Windows 설치 파일 받기 · v0.5.4 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.4/GhostifyOverlay-Setup-0.5.4.exe)**
+**[Windows 설치 파일 받기 · v0.5.5 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.5/GhostifyOverlay-Setup-0.5.5.exe)**
 
-[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.4/GhostifyOverlay-0.5.4.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.4/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
+[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.5/GhostifyOverlay-0.5.5.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.5/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
 
 처음 설치하거나 업데이트할 때는 **EXE**를 사용하면 됩니다.
 
@@ -23,7 +23,7 @@
 | 모드 매니저 | Unity Mod Manager 0.32.5 이상 |
 | 실행 환경 | .NET Framework 4.8 |
 
-1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.4.exe`를 다운로드합니다.
+1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.5.exe`를 다운로드합니다.
 2. **게임을 종료한 뒤** EXE를 실행합니다.
 3. 게임 폴더를 확인하고 **설치하기 / 업데이트**를 누릅니다.
 4. 게임을 실행하고 Unity Mod Manager에서 **Ghostify Overlay**를 활성화합니다.
