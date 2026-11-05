@@ -15,7 +15,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File Tests\Run-AllTests.ps1 -
 
 주요 검사:
 
-- `Run-OrbitRenderTests.ps1`: 실제 선택적 OrbitRender 어댑터를 API 대역과 연결해 미설치·구버전·지연 로드, 등록·해제, 렌더 수명주기, 캔버스 선택, 영상 시계·입력 전달과 실패 정리를 검사합니다. OrbitRender DLL이나 실행 중인 게임이 필요하지 않습니다.
+- `Run-OrbitRenderTests.ps1`: 실제 선택적 OrbitRender 어댑터를 API 대역과 연결해 미설치·API v1 거부·v2 등록·지연 로드, 등록·해제, 렌더 수명주기, 캔버스 선택, 영상 시계·typed 키/native 코드 전달과 실패 정리를 검사합니다. OrbitRender DLL이나 실행 중인 게임이 필요하지 않습니다.
 - `Run-KeyViewerReplayTests.ps1`: production 키뷰어 입력·리플레이 코드를 inert 런타임에서 실행해 일반/고스트/native 키 전달, 같은 프레임의 눌림·해제, 카운터 격리, 실제 입력 차단과 종료 후 복구를 검사합니다. 실제 Unity 캡처 화면은 별도 확인 항목입니다.
 - `Run-FeatureIntegrationTests.ps1`: 실제 입력 패치·곡 정보 가시성 어댑터·행간·설정 콜백을 통제된 런타임과 Harmony에 연결해 채터링·고스트 레인·외부 모드 공존을 검사합니다.
 - `Run-ModManagerCompatibilityTests.ps1`: 실제 UMM 0.32.5에서 배포 DLL의 관리자·Harmony 참조, 진입점, 모든 UMM 멤버 참조를 해석합니다.

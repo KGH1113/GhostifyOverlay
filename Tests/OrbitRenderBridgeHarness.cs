@@ -35,6 +35,11 @@ public static class OrbitRenderBridgeHarness
         OrbitRenderBridge.Tick();
         Check(OrbitRenderTestApi.RegisterCalls == 0, "an incompatible optional API is ignored");
         api.GetField("ApiVersion").SetValue(null, 1);
+        OrbitRenderBridge.Shutdown();
+        OrbitRenderBridge.Tick();
+        Check(OrbitRenderTestApi.RegisterCalls == 0 && !OrbitRenderBridge.IsRendering && !KeyViewer.Instance.Replay,
+            "OverlayApi v1 is rejected without changing live input or registering a legacy callback");
+        api.GetField("ApiVersion").SetValue(null, 2);
         OrbitRenderTestApi.Rendering = true;
         OrbitRenderBridge.Shutdown();
         OrbitRenderBridge.Tick();
@@ -62,7 +67,9 @@ public static class OrbitRenderBridgeHarness
         OrbitRenderTestApi.RejectRegistration = false;
         Thread.Sleep(1100);
         OrbitRenderBridge.Tick();
-        Check(OrbitRenderTestApi.RegisterCalls == 2 && Provider != null && OrbitRenderTestApi.LastId == "GhostifyOverlay", "an idle compatible API accepts the deferred provider");
+        Check(OrbitRenderTestApi.RegisterCalls == 2 && Provider != null && OrbitRenderTestApi.LastId == "GhostifyOverlay", "an idle OverlayApi v2 accepts the deferred provider");
+        Check(OrbitRenderTestApi.ReplayKey != null && Provider.GetType().GetMethod("OnReplayInput") == null,
+            "the provider exposes the typed v2 input contract without a string fallback");
         OrbitRenderBridge.Tick();
         Check(OrbitRenderTestApi.RegisterCalls == 2, "an already registered provider is not duplicated");
 
@@ -72,7 +79,7 @@ public static class OrbitRenderBridgeHarness
         Check(!SettingsWindow.Instance.Visible && !LayoutEditorController.Active && ChatterRuntime.RenderSuspended, "render preparation closes control UI and suspends chatter filtering");
         Check(Canvases().SequenceEqual(new[] { OverlayController.Instance.CaptureCanvas }), "normal rendering provides the HUD without the key viewer");
         Invoke("OnReplayClock", 1d, 10000000L);
-        Invoke("OnReplayInput", "A", true, 10000000L);
+        OrbitRenderTestApi.DispatchReplayKey(KeyCode.A, null, true, 10000000L);
         Check(!OrbitRenderBridge.TryGetReplayTicks(out ticks) && KeyViewer.Instance.Inputs.Count == 0, "normal renders ignore replay-only callbacks");
         End();
         Check(!OrbitRenderBridge.IsRendering && !AttemptTracker.Rendering && !ChatterRuntime.RenderSuspended, "normal render completion releases every session guard");
@@ -85,18 +92,25 @@ public static class OrbitRenderBridgeHarness
         Check(AttemptTracker.Begins == begins, "duplicate session begin does not replace the owned snapshot");
         Invoke("OnReplayClock", 2d, 20000000L);
         Check(OrbitRenderBridge.TryGetReplayTicks(out ticks) && ticks == 20000000L, "presentation clock uses supplied TimeSpan ticks");
-        Invoke("OnReplayInput", "None", true, 0L);
-        Invoke("OnReplayInput", "not-a-key", true, 0L);
-        Check(KeyViewer.Instance.Inputs.Count == 0, "invalid and unbound None key names are ignored");
         Invoke("OnReplayClock", 0d, 0L);
-        Invoke("OnReplayInput", "a", true, -30L);
-        Invoke("OnReplayInput", "A", false, -20L);
-        Invoke("OnReplayInput", "KeypadEnter", true, 15L);
+        OrbitRenderTestApi.DispatchReplayKey(KeyCode.A, null, true, -30L);
+        OrbitRenderTestApi.DispatchReplayKey(KeyCode.A, null, false, -20L);
+        OrbitRenderTestApi.DispatchReplayKey(KeyCode.KeypadEnter, 13, true, 15L);
+        OrbitRenderTestApi.DispatchReplayKey(KeyCode.None, 0x1234, true, 20L);
+        OrbitRenderTestApi.DispatchReplayKey(KeyCode.None, 0x1234, false, 20L);
         Invoke("OnReplayClock", 2d, 20000000L);
-        Check(KeyViewer.Instance.Inputs.Count == 3 && KeyViewer.Instance.Inputs[0].Code == KeyCode.A
+        Check(KeyViewer.Instance.Inputs.Count == 5 && KeyViewer.Instance.Inputs[0].Code == KeyCode.A
             && KeyViewer.Instance.Inputs[0].Ticks == -30 && KeyViewer.Instance.Inputs[1].Ticks == -20
             && !KeyViewer.Instance.Inputs[1].Down && KeyViewer.Instance.Inputs[2].Code == KeyCode.KeypadEnter,
-            "recorded edges preserve event timestamps, case-insensitive names and keypad identity");
+            "typed recorded edges preserve event timestamps and keypad identity");
+        Check(!KeyViewer.Instance.Inputs[0].NativeKey.HasValue && !KeyViewer.Instance.Inputs[1].NativeKey.HasValue
+            && KeyViewer.Instance.Inputs[2].NativeKey == 13,
+            "the optional native code stays absent or is forwarded alongside the Unity key unchanged");
+        Check(KeyViewer.Instance.Inputs[3].Code == KeyCode.None && KeyViewer.Instance.Inputs[3].NativeKey == 0x1234
+            && KeyViewer.Instance.Inputs[3].Down && KeyViewer.Instance.Inputs[4].Code == KeyCode.None
+            && KeyViewer.Instance.Inputs[4].NativeKey == 0x1234 && !KeyViewer.Instance.Inputs[4].Down
+            && KeyViewer.Instance.Inputs[3].Ticks == 20 && KeyViewer.Instance.Inputs[4].Ticks == 20,
+            "native-only press and release events pass through KeyCode.None without filtering or loss");
         Check(OrbitRenderBridge.TryGetReplayTicks(out ticks) && ticks == 20000000L, "frame clock is restored after earlier input-event times");
         Invoke("OnBeforeOverlayCapture", true);
         Check(KeyViewer.Instance.Refreshes == 1, "capture refreshes the replay presentation at the supplied frame clock");
@@ -109,7 +123,7 @@ public static class OrbitRenderBridgeHarness
         Invoke("OnRenderSessionEnd");
         Check(AttemptTracker.Ends == ends, "duplicate session end is harmless");
         int inputs = KeyViewer.Instance.Inputs.Count;
-        Invoke("OnReplayInput", "A", true, 42L);
+        OrbitRenderTestApi.DispatchReplayKey(KeyCode.A, 65, true, 42L);
         Check(KeyViewer.Instance.Inputs.Count == inputs, "late replay input cannot reach live mode");
 
         KeyViewer.Instance.FailBegin = true;
@@ -204,6 +218,7 @@ public static class OrbitRenderBridgeHarness
 public static class OrbitRenderTestApi
 {
     public static object Provider;
+    public static Action<KeyCode, int?, bool, long> ReplayKey;
     public static string LastId;
     public static bool Rendering, RejectRegistration, ThrowUnregister;
     public static int RegisterCalls, UnregisterCalls;
@@ -212,10 +227,15 @@ public static class OrbitRenderTestApi
     {
         RegisterCalls++;
         if (RejectRegistration) return false;
+        var typedInput = provider.GetType().GetMethod("OnReplayKey", BindingFlags.Public | BindingFlags.Instance,
+            null, new[] { typeof(KeyCode), typeof(int?), typeof(bool), typeof(long) }, null);
+        ReplayKey = (Action<KeyCode, int?, bool, long>)Delegate.CreateDelegate(
+            typeof(Action<KeyCode, int?, bool, long>), provider, typedInput);
         LastId = id;
         Provider = provider;
         return true;
     }
+    public static void DispatchReplayKey(KeyCode key, int? nativeKey, bool down, long ticks) => ReplayKey(key, nativeKey, down, ticks);
     public static bool IsRegistered(string id) => Provider != null && id == LastId;
     public static void Unregister(string id)
     {
@@ -292,8 +312,8 @@ namespace DonQuixoteOverlay.KeyViewerContents
             }
             if (replay ? FailBegin : FailEnd) throw new InvalidOperationException("injected viewer lifecycle failure");
         }
-        internal void ApplyReplayKey(KeyCode code, bool down, long ticks) => Inputs.Add(new InputEdge { Code = code, Down = down, Ticks = ticks });
+        internal void ApplyReplayKey(KeyCode code, int? nativeKey, bool down, long ticks) => Inputs.Add(new InputEdge { Code = code, NativeKey = nativeKey, Down = down, Ticks = ticks });
         internal void RefreshReplayFrame() { Refreshes++; }
-        internal sealed class InputEdge { internal KeyCode Code; internal bool Down; internal long Ticks; }
+        internal sealed class InputEdge { internal KeyCode Code; internal int? NativeKey; internal bool Down; internal long Ticks; }
     }
 }

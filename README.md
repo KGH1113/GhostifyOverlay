@@ -113,7 +113,11 @@ Pitch는 백분율로 표시하며, FPS는 초당 10회 갱신합니다. 판정 
 
 ## OrbitRender 호환
 
-OrbitRender **2.7.0 이상**의 `OverlayApi` v1과 연동합니다. OrbitRender와 Ghostify Overlay를 활성화한 뒤 TUFReplay에서 리플레이 렌더링을 시작하면 HUD와 키뷰어가 녹화 입력·영상 시간에 맞춰 표시됩니다. 일반 레벨 렌더에는 HUD를 제공하며, 키뷰어는 리플레이 렌더에 포함됩니다.
+이 브랜치는 **`OverlayApi` v2**가 필요합니다. API v2는 [imnyang/OrbitRender의 `85f572d`](https://github.com/imnyang/OrbitRender/commit/85f572d)에서 추가됐으며, 이 호환 패치를 작성한 시점에는 아직 릴리스되지 않았습니다. 해당 변경을 포함한 OrbitRender 빌드를 사용해야 하며, API v1에는 연결하지 않습니다.
+
+OrbitRender와 Ghostify Overlay를 활성화한 뒤 TUFReplay에서 리플레이 렌더링을 시작하면 HUD와 키뷰어가 녹화 입력·영상 시간에 맞춰 표시됩니다. `OnReplayKey(KeyCode, int?, bool, long)`로 받은 키와 native 키 코드를 실제 입력과 같은 경로로 매핑하며, native 코드가 제공되면 한국어 키보드의 native 전용 바인딩도 처리합니다. 일반 레벨 렌더에는 HUD를 제공하며, 키뷰어는 리플레이 렌더에 포함됩니다.
+
+현재 `85f572d`의 녹화 형식은 키 이름만 저장해 `nativeKey`를 `null`로 전달합니다. Ghostify Overlay는 누락된 native 코드를 추정하지 않으므로, 원래 native 코드와 플랫폼 정보가 기록되기 전까지 한국어 자판의 RAlt 같은 native 전용 바인딩의 완전한 재현은 보장되지 않습니다.
 
 리플레이 렌더 중에는 실제 키보드 입력 대신 기록된 손·발·고스트 키 입력을 표시합니다. 레인과 KPS도 영상 시간을 사용하며, 화면의 키 카운터는 렌더 전용 복사본을 사용하므로 저장된 누적 입력 횟수는 늘어나지 않습니다. 일반 렌더와 리플레이 렌더 모두 시도 횟수·최고 진행도를 갱신하지 않습니다. 완료·취소·모드 비활성화 시 렌더 상태를 정리하고, 모드가 활성화되어 있으면 일반 입력으로 돌아갑니다.
 

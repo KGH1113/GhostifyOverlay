@@ -9,13 +9,16 @@ using UnityEngine;
 
 namespace GhostifyOverlay.Integration.OrbitRender
 {
-    // Optional, name-based OverlayApi v1 integration. No OrbitRender types cross
+    // Optional, name-based OverlayApi v2 integration. No OrbitRender types cross
     // this boundary and no assembly reference is required to run without it.
     internal static class OrbitRenderBridge
     {
+        internal const int RequiredApiVersion = 2;
         private const string ProviderId = "GhostifyOverlay";
         private static readonly Provider Callbacks = new Provider();
-        private static MethodInfo _register, _unregister, _isRegistered;
+        private static Func<string, object, bool> _register;
+        private static Action<string> _unregister;
+        private static Func<string, bool> _isRegistered;
         private static Func<bool> _rendering;
         private static long _nextResolve, _replayTicks;
         private static bool _registered, _observingSession;
@@ -72,8 +75,8 @@ namespace GhostifyOverlay.Integration.OrbitRender
                     BeginSession(true);
                     return;
                 }
-                if (_registered && _isRegistered.Invoke(null, new object[] { ProviderId }) is true) return;
-                _registered = _register.Invoke(null, new object[] { ProviderId, Callbacks }) is true;
+                if (_registered && _isRegistered(ProviderId)) return;
+                _registered = _register(ProviderId, Callbacks);
             }
             catch (Exception error)
             {
@@ -89,16 +92,20 @@ namespace GhostifyOverlay.Integration.OrbitRender
                 Type type;
                 try { type = assembly.GetType("OrbitRender.OverlayApi", false); }
                 catch (Exception) { continue; }
-                if (type == null || !(type.GetField("ApiVersion", flags)?.GetValue(null) is int version) || version < 1) continue;
+                if (type == null || !(type.GetField("ApiVersion", flags)?.GetValue(null) is int version) || version < RequiredApiVersion) continue;
                 var register = type.GetMethod("Register", flags, null, new[] { typeof(string), typeof(object) }, null);
                 var unregister = type.GetMethod("Unregister", flags, null, new[] { typeof(string) }, null);
                 var registered = type.GetMethod("IsRegistered", flags, null, new[] { typeof(string) }, null);
                 var rendering = type.GetProperty("IsRendering", flags);
-                if (register?.ReturnType != typeof(bool) || unregister == null || registered?.ReturnType != typeof(bool) || rendering?.PropertyType != typeof(bool) || rendering.GetGetMethod() == null) continue;
+                if (register?.ReturnType != typeof(bool) || unregister?.ReturnType != typeof(void) || registered?.ReturnType != typeof(bool) || rendering?.PropertyType != typeof(bool) || rendering.GetGetMethod() == null) continue;
+                // Bind once; lifecycle/status calls need no argument arrays or boxing.
+                var registerProvider = (Func<string, object, bool>)Delegate.CreateDelegate(typeof(Func<string, object, bool>), register);
+                var unregisterProvider = (Action<string>)Delegate.CreateDelegate(typeof(Action<string>), unregister);
+                var isRegistered = (Func<string, bool>)Delegate.CreateDelegate(typeof(Func<string, bool>), registered);
                 var isRendering = (Func<bool>)Delegate.CreateDelegate(typeof(Func<bool>), rendering.GetGetMethod());
-                _register = register;
-                _unregister = unregister;
-                _isRegistered = registered;
+                _register = registerProvider;
+                _unregister = unregisterProvider;
+                _isRegistered = isRegistered;
                 _rendering = isRendering;
                 return true;
             }
@@ -109,7 +116,7 @@ namespace GhostifyOverlay.Integration.OrbitRender
         {
             try
             {
-                if (_registered) _unregister?.Invoke(null, new object[] { ProviderId });
+                if (_registered) _unregister?.Invoke(ProviderId);
             }
             catch (Exception error) { Main.Log("OrbitRender overlay unregister: " + error.GetBaseException().Message); }
             finally
@@ -190,10 +197,10 @@ namespace GhostifyOverlay.Integration.OrbitRender
                 if (_replayActive && !_observingSession) Interlocked.Exchange(ref _replayTicks, ticks);
             }
 
-            public void OnReplayInput(string keyCode, bool down, long ticks)
+            public void OnReplayKey(KeyCode key, int? nativeKey, bool down, long ticks)
             {
-                if (_replayActive && !_observingSession && Enum.TryParse(keyCode, true, out KeyCode code) && code != KeyCode.None)
-                    KeyViewer.Instance?.ApplyReplayKey(code, down, ticks);
+                if (_replayActive && !_observingSession)
+                    KeyViewer.Instance?.ApplyReplayKey(key, nativeKey, down, ticks);
             }
 
             public void OnBeforeOverlayCapture(bool replay)
