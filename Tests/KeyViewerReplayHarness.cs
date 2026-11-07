@@ -3,7 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using DonQuixoteOverlay.KeyViewerContents;
-using GhostifyOverlay.Integration.OrbitRender;
+using GhostifyOverlay.Integration.TUFReplay;
+using GhostifyOverlay.Application.Replays;
 using SkyHook;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ public static class KeyViewerReplayHarness
             results.Add("PASS " + message);
         }
 
-        OrbitRenderBridge.IsReplayActive = false;
+        ReplayApiBridge.IsReplayActive = false;
         DonQuixoteOverlay.Main.Enabled = true;
         KeyCountData.Load("unused-test-directory");
         var saved = KeyCountData.Instance;
@@ -36,7 +37,7 @@ public static class KeyViewerReplayHarness
             "repeated live startup cannot duplicate a listener or hook lease");
 
         SkyHookManager.KeyUpdated.Invoke(new SkyHookEvent(KeyLabel.A, 65, true, 10));
-        OrbitRenderBridge.IsReplayActive = true;
+        ReplayApiBridge.IsReplayActive = true;
         viewer.SetReplayInput(true);
         Check(SkyHookManager.KeyUpdated.Count == 0 && DonQuixoteOverlay.AsyncInputHook.Releases == 1 && viewer.Queued == 0,
             "replay entry releases live input and discards queued pre-render events");
@@ -93,7 +94,7 @@ public static class KeyViewerReplayHarness
         viewer.RefreshReplayFrame();
         Check(viewer.Kps.Value.text == "0", "capture refresh expires KPS according to the replay clock");
 
-        OrbitRenderBridge.IsReplayActive = false;
+        ReplayApiBridge.IsReplayActive = false;
         viewer.SetReplayInput(false);
         Check(ReferenceEquals(viewer.Counts, saved) && saved.Count.SequenceEqual(original) && saved.TotalCount == 7,
             "replay exit restores the original cumulative counters");
@@ -134,7 +135,48 @@ public static class KeyViewerReplayHarness
         Check(saved.TotalCount == after, "late recorded callbacks cannot enter the restored live counter");
         viewer.StopHarness();
         NativeRouting(Check);
+        RecordedCounts(Check);
         return results.ToArray();
+    }
+
+    private static void RecordedCounts(Action<bool, string> check)
+    {
+        KeyCountData.Load("unused-recorded-counts-directory");
+        var saved = KeyCountData.Instance;
+        saved.Count[0] = 3000000000L; saved.TotalCount = 4000000000L;
+        var recorded = KeyViewer.CaptureRunState();
+        check(recorded.Counts[0] == 3000000000L && recorded.TotalCount == 4000000000L && !ReferenceEquals(recorded.Counts, saved.Count),
+            "capture preserves 64-bit counts in a detached array");
+        saved.Count[0] = 11; saved.TotalCount = 22;
+        var viewer = new KeyViewer(); viewer.InitializeHarness();
+        ReplayApiBridge.IsReplayActive = true;
+        viewer.SetReplayInput(true, recorded);
+        check(viewer.Total.Value.text == "4000000000" && viewer.Keys[0].Value.text == "3000000000", "historical counts are visible immediately at replay begin");
+        viewer.ApplyReplayKey(KeyCode.A, null, false, 0);
+        check(viewer.Counts.TotalCount == 4000000000L && !viewer.Held(0), "a seek release without a previous press is harmless");
+        viewer.ApplyReplayKey(KeyCode.A, null, true, 10);
+        viewer.ApplyReplayKey(KeyCode.A, null, false, 20);
+        viewer.ApplyReplayKey(KeyCode.A, null, false, 20);
+        viewer.ApplyReplayKey(KeyCode.A, null, true, 30);
+        check(viewer.Counts.TotalCount == 4000000002L && viewer.Held(0), "seek release and later input continue counting from the historical values once per press");
+        check(recorded.Counts[0] == 3000000000L && recorded.TotalCount == 4000000000L && saved.Count[0] == 11 && saved.TotalCount == 22,
+            "replay keys mutate neither the recorded snapshot nor the live save object");
+        viewer.SetReplayInput(true, recorded);
+        check(viewer.Counts.TotalCount == 4000000002L, "a viewer rebuild does not reset already replayed counts");
+        ReplayApiBridge.IsReplayActive = false; viewer.SetReplayInput(false);
+        check(viewer.Total.Value.text == "22" && viewer.Keys[0].Value.text == "11", "historical playback restores the current live display");
+        ReplayApiBridge.IsReplayActive = true;
+        viewer.SetReplayInput(true, new KeyCountRunState { Counts = new long[] { -1, 123 }, TotalCount = -1 });
+        check(viewer.Counts.Count[0] == 0 && viewer.Counts.Count[1] == 123 && viewer.Counts.Count[2] == 0 && viewer.Counts.TotalCount == 0,
+            "short or negative historical count arrays are normalized into safe owned slots");
+        ReplayApiBridge.IsReplayActive = false; viewer.SetReplayInput(false);
+        ReplayApiBridge.IsReplayActive = true; viewer.SetReplayInput(true, null);
+        check(viewer.Counts.Count[0] == 11 && viewer.Counts.TotalCount == 22, "older recordings without key state copy current values");
+        ReplayApiBridge.IsReplayActive = false; viewer.SetReplayInput(false); viewer.StopHarness();
+        int writes = GhostifyOverlay.Infrastructure.Persistence.JsonSettingsRepository<KeyCountData>.Saves;
+        saved.Flush(0, true);
+        check(GhostifyOverlay.Infrastructure.Persistence.JsonSettingsRepository<KeyCountData>.Saves == writes,
+            "historical snapshots and replay presses never dirty the live save object");
     }
 
     private static void NativeRouting(Action<bool, string> check)
@@ -187,7 +229,7 @@ public static class KeyViewerReplayHarness
         check(live[7][12] == 1 && live[7][13] == 1,
             "live label mapping updates both Colon and Semicolon symbolic aliases");
         var persistent = (long[])KeyCountData.Instance.Count.Clone();
-        OrbitRenderBridge.IsReplayActive = true;
+        ReplayApiBridge.IsReplayActive = true;
         viewer.SetReplayInput(true);
         for (int i = 0; i < events.Length; i++)
         {
@@ -198,7 +240,7 @@ public static class KeyViewerReplayHarness
             viewer.ApplyReplayKey(item.key, item.native, false, -50);
             var delta = viewer.Counts.Count.Select((count, index) => count - before[index]);
             check(delta.SequenceEqual(live[i]) && KeyViewer.RainManager.RawRainQueue.Count - rainCount == liveRains[i],
-                "v2 replay has identical live count/rain routing for " + item.name);
+                "typed replay has identical live count/rain routing for " + item.name);
         }
 
         var symbolicBefore = (long[])viewer.Counts.Count.Clone();
@@ -233,16 +275,16 @@ public static class KeyViewerReplayHarness
         check(viewer.Counts.Count[0] == invalidBefore[0] + 1 && viewer.Counts.Count[1] == invalidBefore[1],
             "an invalid native code leaves valid symbolic input usable without narrowing overflow");
         check(KeyCountData.Instance.Count.SequenceEqual(persistent),
-            "native v2 callbacks keep live cumulative records unchanged");
-        OrbitRenderBridge.IsReplayActive = false;
+            "native replay callbacks keep live cumulative records unchanged");
+        ReplayApiBridge.IsReplayActive = false;
         viewer.SetReplayInput(false);
         viewer.StopHarness();
     }
 }
 
-namespace GhostifyOverlay.Integration.OrbitRender
+namespace GhostifyOverlay.Integration.TUFReplay
 {
-    internal static class OrbitRenderBridge { internal static bool IsReplayActive; }
+    internal static class ReplayApiBridge { internal static bool IsReplayActive; }
 }
 namespace UnityEngine
 {
