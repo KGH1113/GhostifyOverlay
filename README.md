@@ -8,9 +8,9 @@
 
 ## 다운로드
 
-**[Windows 설치 파일 받기 · v0.5.5 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.5/GhostifyOverlay-Setup-0.5.5.exe)**
+**[Windows 설치 파일 받기 · v0.5.6 EXE](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.6/GhostifyOverlay-Setup-0.5.6.exe)**
 
-[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.5/GhostifyOverlay-0.5.5.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.5/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
+[모드 ZIP](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.6/GhostifyOverlay-0.5.6.zip) · [파일 검증용 SHA256](https://github.com/vista102/GhostifyOverlay/releases/download/v0.5.6/SHA256SUMS.txt) · [전체 릴리스](https://github.com/vista102/GhostifyOverlay/releases)
 
 처음 설치하거나 업데이트할 때는 **EXE**를 사용하면 됩니다.
 
@@ -23,7 +23,7 @@
 | 모드 매니저 | Unity Mod Manager 0.32.5 이상 |
 | 실행 환경 | .NET Framework 4.8 |
 
-1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.5.exe`를 다운로드합니다.
+1. 위 **Windows 설치 파일 받기**에서 `GhostifyOverlay-Setup-0.5.6.exe`를 다운로드합니다.
 2. **게임을 종료한 뒤** EXE를 실행합니다.
 3. 게임 폴더를 확인하고 **설치하기 / 업데이트**를 누릅니다.
 4. 게임을 실행하고 Unity Mod Manager에서 **Ghostify Overlay**를 활성화합니다.
@@ -113,20 +113,11 @@ Pitch는 백분율로 표시하며, FPS는 초당 10회 갱신합니다. 판정 
 
 ## TUFReplay 호환
 
-이 브랜치는 **TUFReplay `ReplayApi` v1 이상**에 연동합니다. TUFReplay가 게임 안의 리플레이와 영상 렌더링을 맡고, OrbitRender는 `RenderApi` 3부터 캡처와 인코딩만 담당합니다. 삭제된 OrbitRender `OverlayApi` v2에는 등록하지 않습니다. **`ReplayApi`가 포함된 TUFReplay 릴리스가 나오기 전에는 이 변경을 병합하지 말아 주세요.**
+게임 안에서 리플레이 오버레이를 보려면 **TUFReplay 1.2.0 이상**을 활성화한 뒤 저장된 리플레이를 재생합니다. 영상에 오버레이를 넣으려면 **OrbitRender 2.8.0 이상**도 활성화하고 TUFReplay에서 영상 만들기를 실행합니다. [TUFReplay 다운로드](https://github.com/KGH1113/TUFReplay/releases) · [OrbitRender 다운로드](https://github.com/imnyang/OrbitRender/releases)
 
-녹화할 때마다 카운트다운·체크포인트에서 다음 값을 TUFReplay의 실행 기록에 함께 저장합니다.
+녹화 당시의 시도 횟수, 시작 지점, 최고 진행도, 키별 누적 횟수를 리플레이와 함께 저장합니다. 재생하면 기록된 키 입력과 레인·KPS가 리플레이 시간에 맞춰 표시됩니다. 오버레이 상태가 저장되기 전에 녹화한 리플레이는 현재 카운터를 기준으로 표시합니다.
 
-- 세션·누적 시도 횟수와 연습 시도 횟수 네 가지, 시작 지점, 최고 진행도
-- 키뷰어의 키별 누적 횟수와 전체 누적 횟수(64비트)
-
-리플레이는 저장된 값을 보여 주며, 키 카운터는 그 값의 복사본에서 이어서 셉니다. 저장된 상태가 없는 예전 기록은 현재 값을 사용합니다. 리플레이 값은 Ghostify 설정 파일이나 `keyviewer-counts.json`에 쓰지 않으며, 종료하면 원래 카운터와 일반 입력으로 돌아갑니다. 리플레이와 오프라인 렌더(`Time.captureFramerate > 0`)는 플레이어의 시도 횟수·최고 기록에 포함하지 않습니다.
-
-게임 안과 영상 모두 실제 키보드 입력을 차단하고 `OnReplayKey`의 기록된 손·발·고스트 키만 표시합니다. 레인과 KPS는 `OnReplayClock`의 시간(리플레이 시작 기준 100ns 틱)을 사용합니다. Windows 게임 내 리플레이에는 native 코드가 제공될 수 있으며, macOS와 영상 렌더에는 `null`이므로 symbolic 키로 매핑합니다. 누락된 native 코드는 추정하지 않으며, native 전용 바인딩은 해당 코드가 제공될 때만 재현됩니다. ReplayApi를 사용하지 않는 모드에 SkyHook 이벤트나 Unity Input을 주입하지 않습니다.
-
-영상에서는 레벨 준비 후 첫 프레임 전에 HUD·키뷰어 캔버스를 한 번 넘깁니다. 리플레이 시작 시 설정창과 위치 편집을 닫고, 재생 중 Alt+D 단축키를 처리하지 않습니다. 완료·실패·취소·모드 비활성화 시 상태를 정리하며, 이미 재생 중일 때 모드를 켜면 입력과 기록을 보호하며 대기하고 다음 리플레이부터 참여합니다.
-
-TUFReplay를 나중에 로드해도 등록을 다시 시도합니다. TUFReplay·OrbitRender DLL이나 복사한 SDK 없이 동작하므로 두 모드가 없어도 일반 오버레이와 키뷰어를 사용할 수 있습니다. ReplayApi의 캔버스 제공은 리플레이 영상에만 적용되며, 일반 오프라인 렌더의 기존 화면 표시 경로는 유지됩니다.
+리플레이 중 표시되는 키 카운터와 시도 횟수는 실제 플레이 기록과 별도로 관리됩니다. Windows 전용 키 바인딩을 재현하려면 게임 내 리플레이가 해당 키 코드를 제공해야 합니다. 일반 플레이의 오버레이와 키뷰어는 TUFReplay나 OrbitRender 없이도 사용할 수 있습니다.
 
 ## 시도 횟수와 기록
 
