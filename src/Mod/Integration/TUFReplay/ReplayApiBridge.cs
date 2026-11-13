@@ -167,7 +167,7 @@ namespace GhostifyOverlay.Integration.TUFReplay
             }
         }
 
-        // A mode switch only. The run's saved state follows through OnReplayEvent;
+        // A mode switch only. The run's saved state follows through OnReplayState;
         // until then the features show current values, as for a run without one.
         private static void BeginSession(bool render)
         {
@@ -192,13 +192,14 @@ namespace GhostifyOverlay.Integration.TUFReplay
             }
         }
 
-        // The start value (null when the run has none) and any later different
-        // entry. Each replaces the last one, so no counter is applied twice.
-        private static void SetRunState(ReplayRunState value)
+        // The start value (null when the run has none), right after OnReplayBegin and
+        // again after a timeline seek, which starts the run over. Each replaces the
+        // last one, so no counter is applied twice.
+        private static void SetRunState(ReplayRunState state)
         {
             if (!_replayActive || _observingSession) return;
-            AttemptTracker.SetReplayState(value?.Attempts);
-            RecordedKeyCounts = value?.Keys;
+            AttemptTracker.SetReplayState(state?.Attempts);
+            RecordedKeyCounts = state?.Keys;
             KeyViewer.Instance?.SetReplayState(RecordedKeyCounts);
         }
 
@@ -225,7 +226,7 @@ namespace GhostifyOverlay.Integration.TUFReplay
             public void OnReplayBegin(bool render) => BeginSession(render);
 
             // Replay clock time is owned by OnReplayClock; the value alone matters.
-            public void OnReplayEvent(ReplayRunState value, long ticks) => SetRunState(value);
+            public void OnReplayState(ReplayRunState state, long ticks) => SetRunState(state);
 
             public void OnReplayEnd() => EndSession();
 
